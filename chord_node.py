@@ -38,8 +38,10 @@ class ChordNode:
                 conn, addr = s.accept()
                 print(f'new connection from {addr}')
 
-                data = conn.recv(1024).decode()
-                print(f'Recibido del cliente: {data.decode("utf-8")}')
+                data = conn.recv(1024).decode("utf-8")
+                print(addr[0])
+                print(getShaRepr(str(addr[0])))
+                print(f'Recibido del cliente: {data}')
                 conn.sendto(b'Hola cliente!', addr)
                 time.sleep(1)
 
@@ -54,10 +56,11 @@ class ChordNode:
 
 if __name__ == "__main__":
     ip = socket.gethostbyname(socket.gethostname())
+    print(f'My IP: {ip}')
     id = getShaRepr(ip)
     node = ChordNode(id, ip, 8001, M)
 
-    print(node.id)
+    print(f'My ID: {node.id}')
 
     if len(sys.argv) >= 2:
         other_ip = sys.argv[1]
