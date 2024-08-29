@@ -9,8 +9,8 @@ from codes import *
 
 
 class ChordNodeReference:
-    def __init__(self, id: int, ip: str, port: int = 8001, m: int = 4):
-        self.id = getShaRepr(ip) % 2**m
+    def __init__(self, id: int, ip: str, port: int = 8001, m: int = 2):
+        self.id = getShaRepr(ip)
         self.ip = ip
         self.port = port
 
