@@ -12,11 +12,11 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(mes
 
 
 class ChordNode:
-    def __init__(self, id: int, ip: str, port: int = 8001, m: int = 160):
-        self.id = getShaRepr(ip)
+    def __init__(self, id: int, ip: str, port: int = 8001, m: int = 2):
+        self.id = getShaRepr(ip) % 2**m
         self.ip = ip
         self.port = port
-        self.ref = ChordNodeReference(self.id, self.ip, self.port)
+        self.ref = ChordNodeReference(self.id, self.ip, self.port, m)
         self.succ = self.ref  # Initial successor is itself
         self.pred = self.ref  # Initially predecessor is itself
         self.m = m  # Number of bits in the hash/key space
@@ -150,8 +150,9 @@ class ChordNode:
 if __name__ == "__main__":
     ip = socket.gethostbyname(socket.gethostname())
     id = getShaRepr(ip)
-    node = ChordNode(id, ip)
+    node = ChordNode(id, ip,8001,M)
 
+    print(node)
     # if len(sys.argv) >= 2:
     #     other_ip = sys.argv[1]
     #     id = getShaRepr(other_ip)
