@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contactos Registrados</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='contacts.css') }}">
+</head>
+<body>
+<div class="contacts-container">
+    <a href="/" class="home-btn">Back</a>
+
+    <h1>Contacts</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Number</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for contact in contacts %}
+        <tr>
+            <td>C1</td>
+            <td>C2</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <a href="/" class="btn">Agregar nuevo contacto</a>
+</div>
+</body>
+</html>
