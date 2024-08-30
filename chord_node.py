@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(mes
 
 class ChordNode:
     def __init__(self, id: int, ip: str, port: int = 8001, m: int = 2):
-        self.id = getShaRepr(ip)
+        self.id = getShaRepr(ip) % 2 ** m
         self.ip = ip
         self.port = port
         self.ref = ChordNodeReference(self.id, self.ip, self.port, m)
@@ -32,7 +32,7 @@ class ChordNode:
 
     def print_status(self):
         while True:
-            string = f'pred: {self.pred} ={self.ip}= succ: {self.succ}'
+            string = f'pred: {self.pred} *=*=* succ: {self.succ}'
             if self.leader and self.succ.id > self.id:
                 self.leader = False
             if self.first and self.pred.id < self.id:
