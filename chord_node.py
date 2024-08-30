@@ -22,8 +22,8 @@ class ChordNode:
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
-        self.leader=True
-        self.first=True
+        self.leader = True
+        self.first = True
 
         threading.Thread(target=self.start_server, daemon=True).start()
         threading.Thread(target=self.print_status, daemon=True).start()
@@ -32,10 +32,21 @@ class ChordNode:
 
     def print_status(self):
         while True:
-            string=f'pred: {self.pred} ={self.ip}= succ: {self.succ}'
+            string = f'pred: {self.pred} ={self.ip}= succ: {self.succ}'
+            if self.leader and self.succ.id > self.id:
+                self.leader = False
+            if self.first and self.pred.id < self.id:
+                self.first = False
+            if not self.leader and self.succ.id < self.id:
+                self.leader = True
+            if not self.first and self.pred.id > self.id:
+                self.first = True
             print(string)
+            if self.leader:
+                print(f"Lider")
+            if self.first:
+                print("Primero")
             time.sleep(10)
-
 
     def start_server(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -49,11 +60,11 @@ class ChordNode:
                 print(f'new connection from {addr}')
 
                 data = conn.recv(1024).decode("utf-8").split(',')
-                if int(data[0])==JOIN:
-                    if(self.pred.id==self.id):
-                        self.succ=ChordNodeReference(getShaRepr(str(addr[0])),addr[0],8001)
-                        self.pred=ChordNodeReference(getShaRepr(str(addr[0])),addr[0],8001)
-                        data=f'{self.ip},{self.port}'.encode()
+                if int(data[0]) == JOIN:
+                    if self.pred.id == self.id:
+                        self.succ = ChordNodeReference(getShaRepr(str(addr[0])), addr[0], 8001)
+                        self.pred = ChordNodeReference(getShaRepr(str(addr[0])), addr[0], 8001)
+                        data = f'{self.ip},{self.port}'.encode()
                         print(f'Recibido del cliente: {data}')
                         conn.sendto(data, addr)
                 time.sleep(1)
@@ -62,17 +73,15 @@ class ChordNode:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((ip, 8001))
         sock.sendall(f'{JOIN},{ip}'.encode('utf-8'))
-        data= sock.recv(1024).decode().split(',')
+        data = sock.recv(1024).decode().split(',')
         print(data)
-        if len(data)==2:
-            ref_ip,ref_port=data
-            self.pred=ChordNodeReference(getShaRepr(ref_ip),ref_ip,int(ref_port))
-            self.succ=self.pred
-            
+        if len(data) == 2:
+            ref_ip, ref_port = data
+            self.pred = ChordNodeReference(getShaRepr(ref_ip), ref_ip, int(ref_port))
+            self.succ = self.pred
 
-    def update_succ(self,node:ChordNodeReference):
-        self.succ=node
-
+    def update_succ(self, node: ChordNodeReference):
+        self.succ = node
 
 
 if __name__ == "__main__":
