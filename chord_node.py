@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(mes
 
 class ChordNode:
     def __init__(self, id: int, ip: str, port: int = 8001, m: int = 2):
-        self.id = getShaRepr(ip) % 2 ** m
+        self.id = getShaRepr(ip)
         self.ip = ip
         self.port = port
         self.ref = ChordNodeReference(self.id, self.ip, self.port, m)
