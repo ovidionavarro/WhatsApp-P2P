@@ -22,6 +22,8 @@ class ChordNode:
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
+        self.leader=True
+        self.first=True
 
         threading.Thread(target=self.start_server, daemon=True).start()
 
@@ -39,19 +41,25 @@ class ChordNode:
                 print(f'new connection from {addr}')
 
                 data = conn.recv(1024).decode("utf-8")
-                print(addr[0])
-                print(getShaRepr(str(addr[0])))
-                print(f'Recibido del cliente: {data}')
-                conn.sendto(b'Hola cliente!', addr)
+                if data[0]==JOIN:
+                    if(self.pred.id==self.id):
+                        self.succ=ChordNodeReference(getShaRepr(str(addr[0])),addr[0],8001)
+                        self.pred=ChordNodeReference(getShaRepr(str(addr[0])),addr[0],8001)
+                        data=f'{self.ip},{self.port}'.encode()
+                        print(f'Recibido del cliente: {data}')
+                        conn.sendto(data, addr)
                 time.sleep(1)
 
     def join(self, ip, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((ip, 8001))
-        sock.sendall(b'Hola servidor!')
+        sock.sendall(f'{JOIN},{ip}'.encode('utf-8'))
         data = sock.recv(1024)
         print(data.decode('utf-8'))
-        self.start_server()
+    
+    def update_succ(self,node:ChordNodeReference):
+        self.succ=node
+
 
 
 if __name__ == "__main__":
