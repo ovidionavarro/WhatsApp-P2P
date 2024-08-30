@@ -40,8 +40,8 @@ class ChordNode:
                 conn, addr = s.accept()
                 print(f'new connection from {addr}')
 
-                data = conn.recv(1024).decode("utf-8")
-                if data[0]==JOIN:
+                data = conn.recv(1024).decode("utf-8").split(',')
+                if int(data[0])==JOIN:
                     if(self.pred.id==self.id):
                         self.succ=ChordNodeReference(getShaRepr(str(addr[0])),addr[0],8001)
                         self.pred=ChordNodeReference(getShaRepr(str(addr[0])),addr[0],8001)
@@ -54,9 +54,14 @@ class ChordNode:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((ip, 8001))
         sock.sendall(f'{JOIN},{ip}'.encode('utf-8'))
-        data = sock.recv(1024)
-        print(data.decode('utf-8'))
-    
+        data= sock.recv(1024).decode().split(',')
+        print(data)
+        if len(data)==2:
+            ref_ip,ref_port=data
+            self.pred=ChordNodeReference(getShaRepr(ref_ip),ref_ip,int(ref_port))
+            self.succ=self.pred
+            
+
     def update_succ(self,node:ChordNodeReference):
         self.succ=node
 

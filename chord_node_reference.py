@@ -14,6 +14,11 @@ class ChordNodeReference:
         self.ip = ip
         self.port = port
 
+    def __str__(self) -> str:
+        return f'{self.id},{self.ip},{self.port}'
+
+    def __repr__(self) -> str:
+        return str(self)
     #
     # def _send_data(self, op: int, data: str = None) -> bytes:
     #     try:
@@ -53,8 +58,3 @@ class ChordNodeReference:
     #     response = self._send_data(CLOSEST_PRECEDING_FINGER, str(id)).decode().split(',')
     #     return ChordNodeReference(int(response[0]), response[1], self.port)
 
-    def __str__(self) -> str:
-        return f'{self.id},{self.ip},{self.port}'
-
-    def __repr__(self) -> str:
-        return str(self)
