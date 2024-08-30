@@ -26,8 +26,16 @@ class ChordNode:
         self.first=True
 
         threading.Thread(target=self.start_server, daemon=True).start()
+        threading.Thread(target=self.print_status, daemon=True).start()
 
         logging.info(f"Node initialized with ID {self.id} and IP {self.ip}")
+
+    def print_status(self):
+        while True:
+            string=f'pred: {self.pred} ={self.ip}= succ: {self.succ}'
+            print(string)
+            time.sleep(10)
+
 
     def start_server(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
