@@ -34,7 +34,7 @@ class ChordNode:
     def finger_status(self):
         string=''
         for i in range(self.m):
-            string += f'[{self.id+2**i}:{self.finger[i].id}] '
+            string += f'[{(self.id+2**i)%2**self.m}:{self.finger[i].id}] '
         return string
 
     def print_status(self):
@@ -79,7 +79,7 @@ class ChordNode:
                         conn.sendto(data, addr)
                         #update finger table
                         for i in range(self.m):
-                            if(self.between(self.id+(2**i),self.id,self.succ.id)):
+                            if(self.between(self.id+(2**i)%2**self.m,self.id,self.succ.id)):
                                 self.finger[i] = self.succ   
 
 
@@ -98,7 +98,7 @@ class ChordNode:
             self.succ = self.pred
             #update finger table
             for i in range(self.m):
-                if(self.between(self.id+(2**i),self.id,self.succ.id)):
+                if(self._inbetween(self.id+(2**i)%2**self.m,self.id,self.succ.id)):
                     self.finger[i] = self.succ
 
     def update_succ(self, node: ChordNodeReference):
