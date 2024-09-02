@@ -10,15 +10,43 @@ from codes import *
 
 class ChordNodeReference:
     def __init__(self, id: int, ip: str, port: int = 8001, m: int = 2):
-        self.id = getShaRepr(ip)
+        self.id = id
         self.ip = ip
         self.port = port
 
+    def __hash__(self):
+        return hash((self.id, self.ip, self.port))
     def __str__(self) -> str:
         return f'{self.id},{self.ip},{self.port}'
 
     def __repr__(self) -> str:
         return str(self)
+
+    def __eq__(self, other):
+        if isinstance(other, ChordNodeReference):
+            return self.id == other.id and self.ip == other.ip and self.port == other.port
+        return False
+
+    def __lt__(self, other):
+        if isinstance(other, ChordNodeReference):
+            return self.id < other.id
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, ChordNodeReference):
+            return self.id <= other.id
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, ChordNodeReference):
+            return self.id > other.id
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, ChordNodeReference):
+            return self.id >= other.id
+        return NotImplemented
+
     #
     # def _send_data(self, op: int, data: str = None) -> bytes:
     #     try:
