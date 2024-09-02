@@ -79,7 +79,7 @@ class ChordNode:
                         conn.sendto(data, addr)
                         #update finger table
                         for i in range(self.m):
-                            if(self.between(self.id+(2**i)%2**self.m,self.id,self.succ.id)):
+                            if(self._inbetween(self.id+(2**i)%2**self.m,self.id,self.succ.id)):
                                 self.finger[i] = self.succ   
 
 
