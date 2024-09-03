@@ -125,13 +125,14 @@ class ChordNode:
             index = chord.index(self.ref)
             if index == 0:
                 self.first = True
+                self.pred = chord[- 1]
+
             if index == len(chord) - 1:
                 self.leader = True
             try:
                 self.succ = chord[index + 1]
             except:
                 self.succ = chord[0]
-            self.pred = chord[index - 1]
             self.chord = chord
             logging.info(f"chord status: {self.chord}")
             time.sleep(5)
