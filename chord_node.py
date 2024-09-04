@@ -27,7 +27,7 @@ class ChordNode:
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
-        threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        # threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
 
     # Helper method to check if a value is in the range (start, end]
@@ -81,6 +81,7 @@ class ChordNode:
                 if self.succ.id != self.id:
                     logging.info('stabilize')
                     x = self.succ.pred
+                    logging.info(f"esto es el stabilize {x.id}")
                     if x.id != self.id:
                         logging.info(x)
                         if x and self._inbetween(x.id, self.id, self.succ.id):
@@ -152,12 +153,12 @@ class ChordNode:
 
             while True:
                 conn, addr = s.accept()
-                logging.info(f'new connection from {addr}')
 
                 data = conn.recv(1024).decode().split(',')
 
                 data_resp = None
                 option = int(data[0])
+                logging.info(f'new connection from {addr},option:{option}')
 
                 if option == FIND_SUCCESSOR:
                     id = int(data[1])
