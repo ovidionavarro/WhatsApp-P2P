@@ -92,9 +92,10 @@ class ChordNode:
                 logging.info(f"Error in stabilize: {e}")
             if self.pred!=None:
                 self.pred_2=self.pred.pred
+                logging.info(f"pred_pred :{self.pred_2.id}")
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
-            logging.info(f"pred_pred :{self.pred_2.id}")
+            
             fing = ''
             for i in range(0, m):
                 fing += f"[{self.finger[i].id}]"
