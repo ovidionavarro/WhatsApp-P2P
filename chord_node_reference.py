@@ -57,7 +57,7 @@ class ChordNodeReference:
     # Method to check if the predecessor is alive
     def check_predecessor(self):
         resp = self._send_data(CHECK_PREDECESSOR)
-        if resp ==b'':
+        if resp == b'':
             logging.info("Predecesor no responde!!!!!")
             return None
 
@@ -80,4 +80,3 @@ class ChordNodeReference:
 
     def __repr__(self) -> str:
         return str(self)
-

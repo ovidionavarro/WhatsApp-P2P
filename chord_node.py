@@ -181,7 +181,7 @@ class ChordNode:
                     ip = data[2]
                     self.case_basic(ChordNodeReference(ip, self.port))
                 elif option == CHECK_PREDECESSOR:
-                    pass
+                    conn.sendall(f"{True}".encode())
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
                     data_resp = self.closest_preceding_finger(id)
