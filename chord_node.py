@@ -27,7 +27,7 @@ class ChordNode:
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
-        # threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
 
     # Helper method to check if a value is in the range (start, end]
@@ -79,14 +79,17 @@ class ChordNode:
         while True:
             try:
                 if self.succ.id != self.id:
-                    logging.info('stabilize')
                     x = self.succ.pred
-                    logging.info(f"esto es el stabilize {x.id}")
-                    if x.id != self.id:
-                        logging.info(x)
-                        if x and self._inbetween(x.id, self.id, self.succ.id):
-                            self.succ = x
-                        self.succ.notify(self.ref)
+                    logging.info('stabilize')
+                    if isinstance(x,ChordNodeReference):
+                        logging.info(f"esto es el stabilize {x.id}")
+                        if x.id != self.id:
+                            logging.info(x)
+                            if x and self._inbetween(x.id, self.id, self.succ.id):
+                                self.succ = x
+                            self.succ.notify(self.ref)
+                    else:
+                        self.succ = None
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
 

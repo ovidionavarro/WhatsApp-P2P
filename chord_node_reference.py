@@ -45,7 +45,10 @@ class ChordNodeReference:
     @property
     def pred(self) -> 'ChordNodeReference':
         response = self._send_data(GET_PREDECESSOR).decode().split(',')
-        return ChordNodeReference(response[1], self.port)
+        if response != b'':
+            return ChordNodeReference(response[1], self.port)
+        else:
+            return
 
     # Method to notify the current node about another node
     def notify(self, node: 'ChordNodeReference'):
@@ -77,4 +80,3 @@ class ChordNodeReference:
 
     def __repr__(self) -> str:
         return str(self)
-
