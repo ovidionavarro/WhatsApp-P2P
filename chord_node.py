@@ -133,7 +133,10 @@ class ChordNode:
                     resp = self.pred.check_predecessor()
                     logging.info(f" respuesta de pred: {resp}")
                     if resp == b'':
-                        self.pred = self.pred_2
+                        if self.id == self.pred_2.id:
+                            self.pred = None
+                            self.succ = self.ref
+
             except Exception as e:
                 self.pred = None
 
