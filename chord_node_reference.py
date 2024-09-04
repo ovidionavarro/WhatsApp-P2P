@@ -56,8 +56,8 @@ class ChordNodeReference:
 
     # Method to check if the predecessor is alive
     def check_predecessor(self):
-        self._send_data(CHECK_PREDECESSOR)
-
+        data=self._send_data(CHECK_PREDECESSOR).decode()
+        return data
     # Method to find the closest preceding finger of a given id
     def closest_preceding_finger(self, id: int) -> 'ChordNodeReference':
         response = self._send_data(CLOSEST_PRECEDING_FINGER, str(id)).decode().split(',')

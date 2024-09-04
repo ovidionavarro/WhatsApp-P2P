@@ -130,7 +130,8 @@ class ChordNode:
         while True:
             try:
                 if self.pred:
-                    self.pred.check_predecessor()
+                    exist=self.pred.check_predecessor()
+                    print(exist)
             except Exception as e:
                 self.pred = None
             time.sleep(10)
