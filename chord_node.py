@@ -19,7 +19,7 @@ class ChordNode:
         self.ref = ChordNodeReference(self.ip, self.port)
         self.succ = self.ref  # Initial successor is itself
         self.pred = None  # Initially no predecessor
-        self.pred_2=None
+        self.pred_2 = None
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
@@ -90,12 +90,12 @@ class ChordNode:
                         self.succ.notify(self.ref)
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
-            if self.pred!=None:
-                self.pred_2=self.pred.pred
+            if self.pred != None:
+                self.pred_2 = self.pred.pred
                 logging.info(f"pred_pred :{self.pred_2.id}")
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
-            
+
             fing = ''
             for i in range(0, m):
                 fing += f"[{self.finger[i].id}]"
@@ -130,9 +130,12 @@ class ChordNode:
         while True:
             try:
                 if self.pred:
-                    self.pred.check_predecessor()
+                    resp = self.pred.check_predecessor()
+                    logging.info(f" respuesta de pred: {resp}")
             except Exception as e:
+
                 self.pred = None
+
             time.sleep(10)
 
     # Store key method to store a key-value pair and replicate to the successor
@@ -184,7 +187,14 @@ class ChordNode:
                     ip = data[2]
                     self.case_basic(ChordNodeReference(ip, self.port))
                 elif option == CHECK_PREDECESSOR:
-                    pass
+                    if self.pred:
+                        conn.sendall("True".encode())
+
+                    else:
+                        conn.sendall("False".encode())
+                    conn.close()
+                    continue
+
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
                     data_resp = self.closest_preceding_finger(id)

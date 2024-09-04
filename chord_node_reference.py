@@ -20,7 +20,9 @@ class ChordNodeReference:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((self.ip, self.port))
                 s.sendall(f'{op},{data}'.encode('utf-8'))
-                return s.recv(1024)
+                rsp = s.recv(1024)
+                logging.info(f"Send Data resp: {rsp}")
+                return rsp
         except Exception as e:
             logging.info(f"Error sending data: {e}")
             return b''
@@ -56,7 +58,12 @@ class ChordNodeReference:
 
     # Method to check if the predecessor is alive
     def check_predecessor(self):
-        self._send_data(CHECK_PREDECESSOR)
+        res = self._send_data(CHECK_PREDECESSOR)
+        if res == b'':
+            logging.info("Pred no resp")
+            logging.info("Actualizar pred")
+            return res
+        return res
 
     # Method to find the closest preceding finger of a given id
     def closest_preceding_finger(self, id: int) -> 'ChordNodeReference':
