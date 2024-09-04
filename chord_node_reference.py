@@ -45,10 +45,7 @@ class ChordNodeReference:
     @property
     def pred(self) -> 'ChordNodeReference':
         response = self._send_data(GET_PREDECESSOR).decode().split(',')
-        if response != b'':
-            return ChordNodeReference(response[1], self.port)
-        else:
-            return
+        return ChordNodeReference(response[1], self.port)
 
     # Method to notify the current node about another node
     def notify(self, node: 'ChordNodeReference'):
@@ -59,7 +56,10 @@ class ChordNodeReference:
 
     # Method to check if the predecessor is alive
     def check_predecessor(self):
-        self._send_data(CHECK_PREDECESSOR)
+        resp = self._send_data(CHECK_PREDECESSOR)
+        if resp ==b'':
+            logging.info("Predecesor no responde!!!!!")
+            return None
 
     # Method to find the closest preceding finger of a given id
     def closest_preceding_finger(self, id: int) -> 'ChordNodeReference':
@@ -80,3 +80,4 @@ class ChordNodeReference:
 
     def __repr__(self) -> str:
         return str(self)
+

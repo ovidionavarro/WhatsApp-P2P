@@ -79,17 +79,14 @@ class ChordNode:
         while True:
             try:
                 if self.succ.id != self.id:
-                    x = self.succ.pred
                     logging.info('stabilize')
-                    if isinstance(x,ChordNodeReference):
-                        logging.info(f"esto es el stabilize {x.id}")
-                        if x.id != self.id:
-                            logging.info(x)
-                            if x and self._inbetween(x.id, self.id, self.succ.id):
-                                self.succ = x
-                            self.succ.notify(self.ref)
-                    else:
-                        self.succ = None
+                    x = self.succ.pred
+                    logging.info(f"esto es el stabilize {x.id}")
+                    if x.id != self.id:
+                        logging.info(x)
+                        if x and self._inbetween(x.id, self.id, self.succ.id):
+                            self.succ = x
+                        self.succ.notify(self.ref)
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
 
@@ -128,7 +125,9 @@ class ChordNode:
         while True:
             try:
                 if self.pred:
-                    self.pred.check_predecessor()
+                    resp = self.pred.check_predecessor()
+                    if not resp:
+                        self.pred = None
             except Exception as e:
                 self.pred = None
             time.sleep(10)
