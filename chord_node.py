@@ -19,6 +19,7 @@ class ChordNode:
         self.ref = ChordNodeReference(self.ip, self.port)
         self.succ = self.ref  # Initial successor is itself
         self.pred = None  # Initially no predecessor
+        self.pred_2=None
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
@@ -27,7 +28,7 @@ class ChordNode:
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
-        # threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
 
     # Helper method to check if a value is in the range (start, end]
@@ -89,8 +90,11 @@ class ChordNode:
                         self.succ.notify(self.ref)
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
+            if self.pred!=None:
+                self.pred_2=self.pred.pred
 
-            logging.info(f"successor : {self.succ} predecessor {self.pred}")
+            logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
+            logging.info(f"pred_pred :{self.pred_2.id}")
             fing = ''
             for i in range(0, m):
                 fing += f"[{self.finger[i].id}]"
