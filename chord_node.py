@@ -71,8 +71,11 @@ class ChordNode:
             if data[0] == "JOIN" and addr[0] != self.ip and self.leader:
                 self.accept_node(addr[0])
             if data[0] == "ASK_SUCC" and self.succ.id == int(data[1]) and self.ip != addr[0]:
+                logging.info("Actualizando Succ por no existe pred2 del remitente")
                 self.succ = ChordNodeReference(addr[0])
                 self.succ.update_pred(self.ref)
+                logging.info("Mensaje envidao 111111111111111111111")
+
     def send_broadcast(self, mensaje, direccion_broadcast="255.255.255.255"):
 
         # Crear un socket UDP
@@ -212,8 +215,9 @@ class ChordNode:
                             logging.info(f" respuesta de pred: {resp}")
                             if resp1 == b'':
                                 ##tirar boadcast
+                                logging.info("No se encontro pred2 Preguntando broadcast!!!!!!!!!")
                                 self.send_broadcast(f"ASK_SUCC,{self.pred_2.id}")
-                                pass
+
                             else:
                                 # actualizar mi predecesor y su sucesor
                                 logging.info(f"1111111111 cambiando predecesor {self.pred.id} -> {self.pred_2.id}")
@@ -290,6 +294,7 @@ class ChordNode:
                     continue
 
                 elif option == UPDATE_PRED:
+                    logging.info("Updating Pred!!!!!!!!!!!!!!!")
                     id = int(data[1])
                     ip = data[2]
                     self.pred = ChordNodeReference(ip, self.port)
