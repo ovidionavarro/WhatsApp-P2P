@@ -24,6 +24,7 @@ class ChordNode:
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
         self.data = {}  # Dictionary to store key-value pairs
+        self.leader = True
 
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
@@ -32,6 +33,11 @@ class ChordNode:
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
 
     # Helper method to check if a value is in the range (start, end]
+
+    def broadcast_listening(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM):
+            pass
+
     def _inbetween(self, k: int, start: int, end: int) -> bool:
         if start < end:
             return start < k <= end
@@ -90,7 +96,12 @@ class ChordNode:
                         self.succ.notify(self.ref)
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
-            
+
+            if self.succ.id <= self.id:
+                self.leader = True
+                logging.info(f"Soy el Lider:{self.id} >= {self.succ.id}")
+            else:
+                self.leader = False
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
 
@@ -142,20 +153,22 @@ class ChordNode:
                                 ##tirar boadcast
                                 pass
                             else:
-                                #actualizar mi predecesor y su sucesor
+                                # actualizar mi predecesor y su sucesor
                                 logging.info(f"1111111111 cambiando predecesor {self.pred.id} -> {self.pred_2.id}")
-                                self.pred=self.pred_2
+                                self.pred = self.pred_2
                                 self.pred_2.update_succ(self.ref)
-                                self.pred_2 = self.pred.pred 
+                                self.pred_2 = self.pred.pred
                     self.pred_2 = self.pred.pred
                     logging.info(f"pred_pred :{self.pred_2.id}")
             except Exception as e:
                 self.pred = None
 
             time.sleep(5)
-    def update_succ(self,node:'ChordNodeReference'):
+
+    def update_succ(self, node: 'ChordNodeReference'):
         logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
         self.succ = node
+
     # Store key method to store a key-value pair and replicate to the successor
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
@@ -204,7 +217,7 @@ class ChordNode:
                     id = int(data[1])
                     ip = data[2]
                     self.update_succ(ChordNodeReference(ip, self.port))
-                
+
                 elif option == BASE:
                     id = int(data[1])
                     ip = data[2]
@@ -212,7 +225,6 @@ class ChordNode:
                 elif option == CHECK_PREDECESSOR:
                     conn.sendall("True".encode())
 
-                    
                     conn.close()
                     continue
 
