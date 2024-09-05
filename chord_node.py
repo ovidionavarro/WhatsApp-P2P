@@ -90,9 +90,7 @@ class ChordNode:
                         self.succ.notify(self.ref)
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
-            if self.pred != None:
-                self.pred_2 = self.pred.pred
-                logging.info(f"pred_pred :{self.pred_2.id}")
+            
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
 
@@ -100,7 +98,7 @@ class ChordNode:
             for i in range(0, m):
                 fing += f"[{self.finger[i].id}]"
             logging.info(f"finger:{fing}")
-            time.sleep(10)
+            time.sleep(5)
 
     # Notify method to inform the node about another node
     def notify(self, node: 'ChordNodeReference'):
@@ -108,6 +106,7 @@ class ChordNode:
             pass
         if not self.pred or self._inbetween(node.id, self.pred.id, self.id):
             self.pred = node
+            self.pred_2 = self.pred.pred
 
     def case_basic(self, node: 'ChordNodeReference'):
         logging.info(f"casobase recibiendo nodo: {node.id}")
@@ -123,7 +122,7 @@ class ChordNode:
                 self.finger[self.next] = self.find_succ((self.id + 2 ** self.next) % 2 ** self.m)
             except Exception as e:
                 logging.info(f"Error in fix_fingers: {e}")
-            time.sleep(1)
+            time.sleep(5)
 
     # Check predecessor method to periodically verify if the predecessor is alive
     def check_predecessor(self):
@@ -137,16 +136,26 @@ class ChordNode:
                             self.pred = None
                             self.succ = self.ref
                         else:
-                            pass
-                            # Enviar broadcast a la red
-                            # Responde el nodo que tenga como succ a mi pred
-                            # Actualizar pred y succ
-
+                            resp1 = self.pred_2.check_predecessor()
+                            logging.info(f" respuesta de pred: {resp}")
+                            if resp1 == b'':
+                                ##tirar boadcast
+                                pass
+                            else:
+                                #actualizar mi predecesor y su sucesor
+                                logging.info(f"1111111111 cambiando predecesor {self.pred.id} -> {self.pred_2.id}")
+                                self.pred=self.pred_2
+                                self.pred_2.update_succ(self.ref)
+                                self.pred_2 = self.pred.pred 
+                    self.pred_2 = self.pred.pred
+                    logging.info(f"pred_pred :{self.pred_2.id}")
             except Exception as e:
                 self.pred = None
 
-            time.sleep(10)
-
+            time.sleep(5)
+    def update_succ(self,node:'ChordNodeReference'):
+        logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
+        self.succ = node
     # Store key method to store a key-value pair and replicate to the successor
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
@@ -191,13 +200,19 @@ class ChordNode:
                     id = int(data[1])
                     ip = data[2]
                     self.notify(ChordNodeReference(ip, self.port))
+                elif option == UPDATE_SUCC:
+                    id = int(data[1])
+                    ip = data[2]
+                    self.update_succ(ChordNodeReference(ip, self.port))
+                
                 elif option == BASE:
                     id = int(data[1])
                     ip = data[2]
                     self.case_basic(ChordNodeReference(ip, self.port))
                 elif option == CHECK_PREDECESSOR:
-                    if self.pred:
-                        conn.sendall("True".encode())
+                    conn.sendall("True".encode())
+
+                    
                     conn.close()
                     continue
 

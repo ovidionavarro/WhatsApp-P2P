@@ -21,6 +21,7 @@ class ChordNodeReference:
                 s.connect((self.ip, self.port))
                 s.sendall(f'{op},{data}'.encode('utf-8'))
                 rsp = s.recv(1024)
+                # logging.info(f"Send Data resp: {rsp}")
                 return rsp
         except Exception as e:
             logging.info(f"Error sending data: {e}")
@@ -51,6 +52,9 @@ class ChordNodeReference:
     # Method to notify the current node about another node
     def notify(self, node: 'ChordNodeReference'):
         self._send_data(NOTIFY, f'{node.id},{node.ip}')
+
+    def update_succ(self, node: 'ChordNodeReference'):
+        self._send_data(UPDATE_SUCC, f'{node.id},{node.ip}')
 
     def case_basic(self, node: 'ChordNodeReference'):
         self._send_data(BASE, f'{node.id},{node.ip}')
