@@ -18,7 +18,7 @@ class ChordNodeReference:
     def _send_data(self, op: int, data: str = None) -> bytes:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(5.0)
+                s.settimeout(10.0)
                 s.connect((self.ip, self.port))
                 s.sendall(f'{op},{data}'.encode('utf-8'))
                 rsp = s.recv(1024)
@@ -42,6 +42,7 @@ class ChordNodeReference:
     @property
     def succ(self) -> 'ChordNodeReference':
         response = self._send_data(GET_SUCCESSOR).decode().split(',')
+        logging.info(f"Response------------{response}")
         return ChordNodeReference(response[1], self.port)
 
     # Property to get the predecessor of the current node
