@@ -231,13 +231,17 @@ class ChordNode:
                 if option == FIND_SUCCESSOR:
                     id = int(data[1])
                     data_resp = self.find_succ(id)
+
                 elif option == FIND_PREDECESSOR:
                     id = int(data[1])
                     data_resp = self.find_pred(id)
+
                 elif option == GET_SUCCESSOR:
                     data_resp = self.succ if self.succ else self.ref
+
                 elif option == GET_PREDECESSOR:
                     data_resp = self.pred if self.pred else self.ref
+
                 elif option == NOTIFY:
                     id = int(data[1])
                     ip = data[2]
@@ -251,18 +255,20 @@ class ChordNode:
                     id = int(data[1])
                     ip = data[2]
                     self.case_basic(ChordNodeReference(ip, self.port))
+
                 elif option == CHECK_PREDECESSOR:
                     conn.sendall("True".encode())
-
                     conn.close()
                     continue
 
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
                     data_resp = self.closest_preceding_finger(id)
+
                 elif option == STORE_KEY:
                     key, value = data[1], data[2]
                     self.data[key] = value
+
                 elif option == RETRIEVE_KEY:
                     key = data[1]
                     data_resp = self.data.get(key, '')
