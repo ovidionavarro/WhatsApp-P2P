@@ -27,6 +27,8 @@ class ChordNode:
         self.leader = True
 
         # Start background threads for stabilization, fixing fingers, and checking predecessor
+        self.send_broadcast()
+        threading.Thread(target=self.broadcast_listening, daemon=True).start()
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
         threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
@@ -34,9 +36,36 @@ class ChordNode:
 
     # Helper method to check if a value is in the range (start, end]
 
+    def send_broadcast(self):
+        # Crear un socket UDP
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        # Permitir la reutilización de la dirección
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Habilitar la opción para enviar mensajes broadcast
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        # Enviar el mensaje broadcast
+        sock.sendto("JOIN".encode(), ("255.255.255.255", 8001))
+        logging.info(f"Mensaje broadcast enviado: JOIN")
+
+        # Cerrar el socket
+        sock.close()
+
     def broadcast_listening(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM):
-            pass
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(("", 8001))
+
+        while True:
+            logging.info("Esperando Mensaje BroadCast...")
+            data, addr = sock.recvfrom(1024)
+            logging.info(f"Mensaje: {data} recibido de: {addr[0]}")
+            if data == 'JOIN' and self.leader:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect((addr[0], 8001))
+                    s.sendall(f'ACCEPTED'.encode('utf-8'))
 
     def _inbetween(self, k: int, start: int, end: int) -> bool:
         if start < end:
@@ -133,7 +162,7 @@ class ChordNode:
                 self.finger[self.next] = self.find_succ((self.id + 2 ** self.next) % 2 ** self.m)
             except Exception as e:
                 logging.info(f"Error in fix_fingers: {e}")
-            time.sleep(5)
+            time.sleep(2)
 
     # Check predecessor method to periodically verify if the predecessor is alive
     def check_predecessor(self):
@@ -238,6 +267,9 @@ class ChordNode:
                     key = data[1]
                     data_resp = self.data.get(key, '')
 
+                elif option == "ACCEPTED":
+                    self.join(ChordNodeReference(addr[0]))
+
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
                     conn.sendall(response)
@@ -248,9 +280,9 @@ if __name__ == "__main__":
     ip = socket.gethostbyname(socket.gethostname())
     node = ChordNode(ip, 8001, m)
 
-    if len(sys.argv) >= 2:
-        other_ip = sys.argv[1]
-        node.join(ChordNodeReference(other_ip, node.port))
+    # if len(sys.argv) >= 2:
+    #     other_ip = sys.argv[1]
+    #     node.join(ChordNodeReference(other_ip, node.port))
 
     while True:
         pass
