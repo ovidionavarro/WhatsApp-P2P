@@ -94,8 +94,9 @@ class ChordNode:
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
             
-            if(node.id>=node.succ.id):
+            if(self.id>=self.succ.id):
                 self.leader=True
+                logging.info(f"leader change {self.id} >= {self.succ.id}")
             else:
                 self.leader=False
 
