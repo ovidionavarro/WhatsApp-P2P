@@ -21,7 +21,6 @@ class ChordNodeReference:
                 s.connect((self.ip, self.port))
                 s.sendall(f'{op},{data}'.encode('utf-8'))
                 rsp = s.recv(1024)
-                logging.info(f"Send Data resp: {rsp}")
                 return rsp
         except Exception as e:
             logging.info(f"Error sending data: {e}")

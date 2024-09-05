@@ -123,7 +123,7 @@ class ChordNode:
                 self.finger[self.next] = self.find_succ((self.id + 2 ** self.next) % 2 ** self.m)
             except Exception as e:
                 logging.info(f"Error in fix_fingers: {e}")
-            time.sleep(10)
+            time.sleep(1)
 
     # Check predecessor method to periodically verify if the predecessor is alive
     def check_predecessor(self):
@@ -136,6 +136,11 @@ class ChordNode:
                         if self.id == self.pred_2.id:
                             self.pred = None
                             self.succ = self.ref
+                        else:
+                            pass
+                            # Enviar broadcast a la red
+                            # Responde el nodo que tenga como succ a mi pred
+                            # Actualizar pred y succ
 
             except Exception as e:
                 self.pred = None
@@ -193,9 +198,6 @@ class ChordNode:
                 elif option == CHECK_PREDECESSOR:
                     if self.pred:
                         conn.sendall("True".encode())
-
-                    else:
-                        conn.sendall("False".encode())
                     conn.close()
                     continue
 
