@@ -34,6 +34,20 @@ class ChordNode:
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
         self.send_broadcast()
 
+    def listening_tcp(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((self.ip, self.port + 1))
+            s.listen(10)
+            while True:
+                conn, addr = s.accept()
+                data = conn.recv(1024).decode().split(',')
+                option = data[0]
+                if option == ACCEPTED:
+                    cnr = ChordNodeReference(addr[0])
+                    self.join(cnr)
+                    conn.close()
+
     def broadcast_listening(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -272,10 +286,6 @@ class ChordNode:
                 elif option == RETRIEVE_KEY:
                     key = data[1]
                     data_resp = self.data.get(key, '')
-
-                elif option == ACCEPTED:
-                    cnr = ChordNodeReference(addr[0])
-                    self.join(cnr)
 
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
