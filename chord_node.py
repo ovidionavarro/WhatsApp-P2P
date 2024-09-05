@@ -276,7 +276,7 @@ class ChordNode:
                     data_resp = self.data.get(key, '')
 
                 elif option == ACCEPTED:
-                    self.join(ChordNodeReference(addr[0]))
+                    self.join(ChordNodeReference(addr[0],addr[1]))
 
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()

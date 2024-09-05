@@ -48,6 +48,7 @@ class ChordNodeReference:
     @property
     def pred(self) -> 'ChordNodeReference':
         response = self._send_data(GET_PREDECESSOR).decode().split(',')
+        logging.info(f"Response------------{response}")
         return ChordNodeReference(response[1], self.port)
 
     # Method to notify the current node about another node
