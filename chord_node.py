@@ -82,7 +82,7 @@ class ChordNode:
     def accept_node(self, ip, port=8001):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(5.0)
-            s.connect((ip, 8001))
+            s.connect((ip, 8002))
             s.sendall(f'{ACCEPTED}'.encode('utf-8'))
             s.close()
 
