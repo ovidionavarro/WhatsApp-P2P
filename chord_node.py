@@ -27,12 +27,13 @@ class ChordNode:
         self.leader = True
 
         # Start background threads for stabilization, fixing fingers, and checking predecessor
-        self.send_broadcast()
+
         threading.Thread(target=self.broadcast_listening, daemon=True).start()
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
         threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
+        self.send_broadcast()
 
     # Helper method to check if a value is in the range (start, end]
 
@@ -63,7 +64,7 @@ class ChordNode:
             data, addr = sock.recvfrom(1024)
             data = data.decode()
             logging.info(f"Mensaje: {data} recibido de: {addr[0]}")
-            if data == 'JOIN' and self.leader:
+            if data == 'JOIN' and self.leader and addr[0] != self.ip:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     logging.info(f"Intentando conectar con: {addr[0]}")
                     s.connect((addr[0], 8001))
@@ -276,7 +277,9 @@ class ChordNode:
                     data_resp = self.data.get(key, '')
 
                 elif option == ACCEPTED:
-                    self.join(ChordNodeReference(addr[0],addr[1]))
+                    logging.info(f"Nodo {addr[0]} acepta la conexion")
+                    cnr = ChordNodeReference(addr[0], 8001)
+                    self.join(cnr)
 
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
