@@ -24,12 +24,53 @@ class ChordNode:
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
         self.data = {}  # Dictionary to store key-value pairs
-        self.leader=True
+        self.leader = True
+
+        threading.Thread(target=self.broadcast_listening, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
         threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
+        self.send_broadcast()
+
+    def broadcast_listening(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', 8001))
+
+        while True:
+            logging.info("Esperando broadcast....")
+            data, addr = sock.recvfrom(1024)
+            data = data.decode()
+            logging.info(f"Mensaje: {data} de: {addr[0]}")
+            if data == "JOIN" and addr[0] != self.ip and self.leader:
+                self.accept_node(addr[0])
+
+    def send_broadcast(self, direccion_broadcast="255.255.255.255"):
+        mensaje = "JOIN"
+        # Crear un socket UDP
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        # Permitir la reutilización de la dirección
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Habilitar la opción para enviar mensajes broadcast
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        # Enviar el mensaje broadcast
+        sock.sendto(mensaje.encode(), (direccion_broadcast, 8001))
+        logging.info(f"Mensaje broadcast enviado: {mensaje}")
+
+        # Cerrar el socket
+        sock.close()
+
+    def accept_node(self, ip, port=8001):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(5.0)
+            s.connect((ip, 8001))
+            s.sendall(f'{ACCEPTED}'.encode('utf-8'))
+            s.close()
 
     # Helper method to check if a value is in the range (start, end]
     def _inbetween(self, k: int, start: int, end: int) -> bool:
@@ -90,15 +131,14 @@ class ChordNode:
                         self.succ.notify(self.ref)
             except Exception as e:
                 logging.info(f"Error in stabilize: {e}")
-            
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
-            
-            if(self.id>=self.succ.id):
-                self.leader=True
+
+            if (self.id >= self.succ.id):
+                self.leader = True
                 logging.info(f"leader change {self.id} >= {self.succ.id}")
             else:
-                self.leader=False
+                self.leader = False
 
             fing = ''
             for i in range(0, m):
@@ -148,20 +188,22 @@ class ChordNode:
                                 ##tirar boadcast
                                 pass
                             else:
-                                #actualizar mi predecesor y su sucesor
+                                # actualizar mi predecesor y su sucesor
                                 logging.info(f"1111111111 cambiando predecesor {self.pred.id} -> {self.pred_2.id}")
-                                self.pred=self.pred_2
+                                self.pred = self.pred_2
                                 self.pred_2.update_succ(self.ref)
-                                self.pred_2 = self.pred.pred 
+                                self.pred_2 = self.pred.pred
                     self.pred_2 = self.pred.pred
                     logging.info(f"pred_pred :{self.pred_2.id}")
             except Exception as e:
                 self.pred = None
 
             time.sleep(5)
-    def update_succ(self,node:'ChordNodeReference'):
+
+    def update_succ(self, node: 'ChordNodeReference'):
         logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
         self.succ = node
+
     # Store key method to store a key-value pair and replicate to the successor
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
@@ -210,7 +252,7 @@ class ChordNode:
                     id = int(data[1])
                     ip = data[2]
                     self.update_succ(ChordNodeReference(ip, self.port))
-                
+
                 elif option == BASE:
                     id = int(data[1])
                     ip = data[2]
@@ -218,7 +260,6 @@ class ChordNode:
                 elif option == CHECK_PREDECESSOR:
                     conn.sendall("True".encode())
 
-                    
                     conn.close()
                     continue
 
@@ -231,6 +272,10 @@ class ChordNode:
                 elif option == RETRIEVE_KEY:
                     key = data[1]
                     data_resp = self.data.get(key, '')
+
+                elif option == ACCEPTED:
+                    cnr = ChordNodeReference(addr[0])
+                    self.join(cnr)
 
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
