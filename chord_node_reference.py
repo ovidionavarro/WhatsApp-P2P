@@ -57,6 +57,9 @@ class ChordNodeReference:
     def update_succ(self, node: 'ChordNodeReference'):
         self._send_data(UPDATE_SUCC, f'{node.id},{node.ip}')
 
+    def update_pred(self, node: 'ChordNodeReference'):
+        self._send_data(UPDATE_PRED, f'{node.id},{node.ip}')
+
     def case_basic(self, node: 'ChordNodeReference'):
         self._send_data(BASE, f'{node.id},{node.ip}')
 

@@ -33,7 +33,14 @@ class ChordNode:
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
         threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
-        self.send_broadcast()
+        self.send_broadcast("JOIN")
+
+    def send_tcp(self, ip, port=8001):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(5.0)
+            s.connect((ip, port))
+            s.sendall(f'{UPDATE_PRED}'.encode('utf-8'))
+            s.close()
 
     def listening_tcp(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -59,13 +66,15 @@ class ChordNode:
         while True:
             logging.info("Esperando broadcast....")
             data, addr = sock.recvfrom(1024)
-            data = data.decode()
-            logging.info(f"Mensaje: {data} de: {addr[0]}")
-            if data == "JOIN" and addr[0] != self.ip and self.leader:
+            data = data.decode().split(',')
+            logging.info(f"Mensaje: {data[0]} de: {addr[0]}")
+            if data[0] == "JOIN" and addr[0] != self.ip and self.leader:
                 self.accept_node(addr[0])
+            if data[0] == "ASK_SUCC" and self.succ.id == int(data[1]) and self.ip != addr[0]:
+                self.succ = ChordNodeReference(addr[0])
+                self.succ.update_pred(self.ref)
+    def send_broadcast(self, mensaje, direccion_broadcast="255.255.255.255"):
 
-    def send_broadcast(self, direccion_broadcast="255.255.255.255"):
-        mensaje = "JOIN"
         # Crear un socket UDP
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -203,6 +212,7 @@ class ChordNode:
                             logging.info(f" respuesta de pred: {resp}")
                             if resp1 == b'':
                                 ##tirar boadcast
+                                self.send_broadcast(f"ASK_SUCC,{self.pred_2.id}")
                                 pass
                             else:
                                 # actualizar mi predecesor y su sucesor
@@ -276,9 +286,13 @@ class ChordNode:
                     self.case_basic(ChordNodeReference(ip, self.port))
                 elif option == CHECK_PREDECESSOR:
                     conn.sendall("True".encode())
-
                     conn.close()
                     continue
+
+                elif option == UPDATE_PRED:
+                    id = int(data[1])
+                    ip = data[2]
+                    self.pred = ChordNodeReference(ip, self.port)
 
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
