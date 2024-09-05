@@ -24,7 +24,7 @@ class ChordNode:
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
         self.data = {}  # Dictionary to store key-value pairs
-
+        self.leader=True
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
@@ -93,6 +93,11 @@ class ChordNode:
             
 
             logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
+            
+            if(node.id>=node.succ.id):
+                self.leader=True
+            else:
+                self.leader=False
 
             fing = ''
             for i in range(0, m):
