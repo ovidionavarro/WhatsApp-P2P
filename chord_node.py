@@ -61,11 +61,13 @@ class ChordNode:
         while True:
             logging.info("Esperando Mensaje BroadCast...")
             data, addr = sock.recvfrom(1024)
+            data = data.decode()
             logging.info(f"Mensaje: {data} recibido de: {addr[0]}")
             if data == 'JOIN' and self.leader:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    logging.info(f"Intentando conectar con: {addr[0]}")
                     s.connect((addr[0], 8001))
-                    s.sendall(f'ACCEPTED'.encode('utf-8'))
+                    s.sendall(f'{ACCEPTED}'.encode('utf-8'))
 
     def _inbetween(self, k: int, start: int, end: int) -> bool:
         if start < end:
@@ -273,7 +275,7 @@ class ChordNode:
                     key = data[1]
                     data_resp = self.data.get(key, '')
 
-                elif option == "ACCEPTED":
+                elif option == ACCEPTED:
                     self.join(ChordNodeReference(addr[0]))
 
                 if data_resp:
