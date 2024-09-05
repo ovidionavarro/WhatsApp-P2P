@@ -18,6 +18,7 @@ class ChordNodeReference:
     def _send_data(self, op: int, data: str = None) -> bytes:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(5.0)
                 s.connect((self.ip, self.port))
                 s.sendall(f'{op},{data}'.encode('utf-8'))
                 rsp = s.recv(1024)
