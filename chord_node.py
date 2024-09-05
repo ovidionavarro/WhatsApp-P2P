@@ -27,7 +27,7 @@ class ChordNode:
         self.leader = True
 
         threading.Thread(target=self.broadcast_listening, daemon=True).start()
-        threading.Thread(target=self.listening_tcp(), daemon=True).start()
+        threading.Thread(target=self.listening_tcp, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
@@ -43,11 +43,12 @@ class ChordNode:
             while True:
                 conn, addr = s.accept()
                 data = conn.recv(1024).decode().split(',')
-                option = data[0]
+                option = int(data[0])
                 logging.info(f"option: {option}")
                 if option == ACCEPTED:
                     cnr = ChordNodeReference(addr[0])
                     self.join(cnr)
+                    logging.info("loginnnnnnnn")
                     conn.close()
 
     def broadcast_listening(self):
