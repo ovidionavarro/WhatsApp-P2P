@@ -31,7 +31,7 @@ def init_app(node:'ChordNode'):
             # Obtiene los datos del formulario
             name = request.form.get('name')
             number = request.form.get('number')
-            resp=node.sing_up(getShaRepr(f"{name}_{number}"))
+            resp=node.sing_up(getShaRepr(f"{name}_{number}"),f"{name}_{number}")
             # user_folder = os.path.join('DB', f'{name}_{number}')
             # os.makedirs(user_folder, exist_ok=True)
             return redirect(url_for('contacts', name=name, number=number))
