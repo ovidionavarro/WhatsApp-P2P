@@ -238,7 +238,7 @@ class ChordNode:
 
 ########DATABASE
     def sing_up(self,id:int,name:str,number:str):
-        logging.info(f'{id} del nuevo user')
+        logging.info(f'{id} del nuevo user9999999999999999999999999')
         node=self.find_succ(id)
         return node.sing_up(f'{id},{name},{number}')#poner .decode()
     # Store key method to store a key-value pair and replicate to the successor    
