@@ -6,7 +6,7 @@ import logging
 from chord_node_reference import ChordNodeReference
 from codes import *
 from utils import getShaRepr
-from view import app
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
@@ -236,7 +236,8 @@ class ChordNode:
         logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
         self.succ = node
 
-    # Store key method to store a key-value pair and replicate to the successor
+    # Store key method to store a key-value pair and replicate to the successor    
+    
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
         node = self.find_succ(key_hash)
@@ -316,13 +317,19 @@ class ChordNode:
                 conn.close()
 
 
-if __name__ == "__main__":
-    ip = socket.gethostbyname(socket.gethostname())
-    node = ChordNode(ip, 8001, m)
 
-    if len(sys.argv) >= 2:
-        other_ip = sys.argv[1]
-        node.join(ChordNodeReference(other_ip, node.port))
-    app.run(debug=True,host=ip,port=8001)
-    while True:
-        pass
+
+
+
+
+    # def store_key(self, key: str, value: str):
+        # key_hash = getShaRepr(key)
+        # node = self.find_succ(key_hash)
+        # node.store_key(key, value)
+        # self.data[key] = value  # Store in the current node
+        # self.succ.store_key(key, value)  # Replicate to the successor
+    # Retrieve key method to get a value for a given key
+    # def retrieve_key(self, key: str) -> str:
+        # key_hash = getShaRepr(key)
+        # node = self.find_succ(key_hash)
+        # return node.retrieve_key(key)
