@@ -76,7 +76,9 @@ class ChordNodeReference:
     def closest_preceding_finger(self, id: int) -> 'ChordNodeReference':
         response = self._send_data(CLOSEST_PRECEDING_FINGER, str(id)).decode().split(',')
         return ChordNodeReference(response[1], self.port)
-
+    def sing_up(self,data):
+        resp=self._send_data(SING_UP,data)
+        return resp
     # Method to store a key-value pair in the current node
     def store_key(self, key: str, value: str):
         self._send_data(STORE_KEY, f'{key},{value}')

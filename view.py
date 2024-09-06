@@ -17,7 +17,6 @@ def init_app(node:'ChordNode'):
             # Obtiene los datos del formulario
             name = request.form.get('name')
             number = request.form.get('number')
-
             # Puedes procesar los datos aquí o pasarlos a otra función
             return redirect(url_for('contacts', name=name, number=number))
 
@@ -31,12 +30,11 @@ def init_app(node:'ChordNode'):
             # Obtiene los datos del formulario
             name = request.form.get('name')
             number = request.form.get('number')
-            resp=node.sing_up(getShaRepr(f"{name}_{number}"),f"{name}_{number}")
-            # user_folder = os.path.join('DB', f'{name}_{number}')
-            # os.makedirs(user_folder, exist_ok=True)
+            resp=node.sing_up(getShaRepr(f"{name}_{number}"),name,number)
+            ###crear una pag de error en caso de resp=false
             return redirect(url_for('contacts', name=name, number=number))
         return render_template("singup.html")
-
+        
 
     @app.route('/contacts')
     def contacts():
@@ -49,7 +47,7 @@ if __name__ == "__main__":
     node = ChordNode(ip, 8001, m)
 
     app=init_app(node)
-    app.run(debug=False,host='0.0.0.0',port=5001)
+    app.run(debug=False,host=ip,port=5001)
     while True:
         pass
 

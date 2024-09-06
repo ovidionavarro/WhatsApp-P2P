@@ -6,7 +6,7 @@ import logging
 from chord_node_reference import ChordNodeReference
 from codes import *
 from utils import getShaRepr
-
+from db import DB
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
@@ -236,8 +236,18 @@ class ChordNode:
         logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
         self.succ = node
 
+########DATABASE
+    def sing_up(self,id:int,name:str,number:str):
+        logging.info(f'{id} del nuevo user')
+        node=self.find_succ(id)
+        return node.sing_up(f'{id},{name},{number}')
     # Store key method to store a key-value pair and replicate to the successor    
-    
+    def _sing_up(self,name,number):
+        resp=DB.register(name,number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee",resp)
+        return resp
+
+
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
         node = self.find_succ(key_hash)
@@ -304,12 +314,26 @@ class ChordNode:
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
                     data_resp = self.closest_preceding_finger(id)
-                elif option == STORE_KEY:
-                    key, value = data[1], data[2]
-                    self.data[key] = value
-                elif option == RETRIEVE_KEY:
-                    key = data[1]
-                    data_resp = self.data.get(key, '')
+                
+###########DATABASE
+                elif option==SING_UP:
+                    name=data[2]
+                    number=data[3]
+                    data_resp= self._sing_up(name,number)
+                    if(data_resp=='True'):            
+                        conn.sendall("True".encode())
+                    else :
+                        conn.sendall("False".encode())
+                    conn.close()
+                    continue
+                
+                
+                # elif option == STORE_KEY:
+                #     key, value = data[1], data[2]
+                #     self.data[key] = value
+                # elif option == RETRIEVE_KEY:
+                #     key = data[1]
+                #     data_resp = self.data.get(key, '')
 
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
