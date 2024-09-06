@@ -6,6 +6,7 @@ import logging
 from chord_node_reference import ChordNodeReference
 from codes import *
 from utils import getShaRepr
+from view import app
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
@@ -322,6 +323,6 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2:
         other_ip = sys.argv[1]
         node.join(ChordNodeReference(other_ip, node.port))
-
+    app.run(debug=True,host=ip,port=8001)
     while True:
         pass
