@@ -18,8 +18,13 @@ def init_app(node:'ChordNode'):
             name = request.form.get('name')
             number = request.form.get('number')
             # Puedes procesar los datos aquí o pasarlos a otra función
-            return redirect(url_for('contacts', name=name, number=number))
-
+            resp=node.sing_in(getShaRepr(f"{name}_{number}"),name,number)
+            logging.info(f'desde la pagina de inicio data= {resp} {type(resp)}')
+            if resp=="True":
+                return redirect(url_for('contacts', name=name, number=number))
+            else:
+                return redirect(url_for('singup'))
+            
         return render_template('index.html')
 
 

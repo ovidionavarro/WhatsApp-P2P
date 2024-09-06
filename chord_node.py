@@ -240,12 +240,23 @@ class ChordNode:
     def sing_up(self,id:int,name:str,number:str):
         logging.info(f'{id} del nuevo user')
         node=self.find_succ(id)
-        return node.sing_up(f'{id},{name},{number}')
+        return node.sing_up(f'{id},{name},{number}')#poner .decode()
     # Store key method to store a key-value pair and replicate to the successor    
     def _sing_up(self,name,number):
         resp=DB.register(name,number)
         print("eeeeeeeeeeeeeeeeeeeeeeeeee",resp)
         return resp
+    
+    def sing_in(self,id:int,name:str,number:str):
+        logging.info(f' buscando a {id} name ')
+        node=self.find_succ(id)
+        return node.sing_in(f'{id},{name},{number}').decode()
+    
+    def _sing_in(self,name,number):
+        resp=DB.sing_in(name,number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee",resp)
+        return resp
+    
 
 
     def store_key(self, key: str, value: str):
@@ -321,6 +332,17 @@ class ChordNode:
                     number=data[3]
                     data_resp= self._sing_up(name,number)
                     if(data_resp=='True'):            
+                        conn.sendall("True".encode())
+                    else :
+                        conn.sendall("False".encode())
+                    conn.close()
+                    continue
+                elif option==SING_IN:
+                    name=data[2]
+                    number=data[3]
+                    data_resp= self._sing_in(name,number)
+                    logging.info(f'entrando a sing in con data {data_resp}')            
+                    if(data_resp=='True'):
                         conn.sendall("True".encode())
                     else :
                         conn.sendall("False".encode())
