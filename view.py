@@ -80,6 +80,7 @@ def init_app(node: 'ChordNode'):
             resp = node.sing_in(getShaRepr(f"{name}_{number}"), name, number)
             if resp != 'True':
                 logging.info(f'WARNING!!!!!!!! user {name}_{number} DONT exist,')
+                return redirect(url_for('contacts', name=my_name, number=my_number))
             ###crear una pag de error en caso de resp=false
             created=node.add_contact(my_id,my_name,my_number,name,number)
             logging.info('Usuario creado')

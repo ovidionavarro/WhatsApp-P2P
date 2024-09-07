@@ -9,6 +9,31 @@ body {
     align-items: center;
     height: 100vh;
 }
+/* Estilo para los mensajes del usuario */
+/* Estilo para los mensajes del usuario */
+.right {
+    /* background-color: #DCF8C6;
+    align-self: flex-end;
+    border-radius: 10px 10px 0 10px;
+    padding: 10px;
+    margin: 5px 0;
+    max-width: 80%;
+    word-wrap: break-word; */
+    text-align: right;
+}
+
+/* Estilo para los mensajes de otros */
+.left {
+    /* background-color: #ffffff;
+    align-self: flex-start;
+    border-radius: 10px 10px 10px 0;
+    padding: 10px;
+    margin: 5px 0;
+    max-width: 80%;
+    word-wrap: break-word; */
+    text-align: left;
+}
+
 
 .msg{
     font-weight: bold;
