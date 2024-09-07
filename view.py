@@ -43,9 +43,35 @@ def init_app(node: 'ChordNode'):
         numb = request.args.get("number")
 
         id = getShaRepr(f"{name}_{numb}")
-        data = node.get_contacts(id, name, numb,'contacts')
-        logging.info(f'esta es la dataaaaaaaaaaaaa{data}')
-        return render_template('contacts.html')
+        contacts_list = node.get_contacts(id, name, numb, 'contacts').split('\n')
+        context = {
+            'contacts': contacts_list if not '' in contacts_list else [],
+            'id': id,
+            'name': name,
+            'number': numb
+        }
+        logging.info(f'Contactos de {name}-{numb}: {contacts_list}')
+        return render_template('contacts.html', **context)
+
+    @app.route('/add_contacts', methods=['GET', 'POST'])
+    def add_contacts():
+        my_name = request.args.get("name")
+        my_number = request.args.get("number")
+        my_id = request.args.get("id")
+        if request.method == 'POST':
+
+            logging.info('Adding Contact!!!!!!')
+            # Obtiene los datos del formulario
+            name = request.form.get('name')
+            number = request.form.get('number')
+            resp = node.sing_in(getShaRepr(f"{name}_{number}"), name, number)
+            print(resp)
+            if resp != 'True':
+                logging.info(f'33333333333333333333333 user {name}_{number} no exist,')
+            ###crear una pag de error en caso de resp=false
+            return redirect(url_for('contacts', name=my_name, number=my_number))
+
+        return render_template("add_contacts.html")
 
     return app
 

@@ -27,24 +27,10 @@
         {% endfor %}
         </tbody>
     </table>
+    <div class="button-container">
+        <a href="{{url_for('add_contacts', id=id, name=name, number=number)}}" class="btn">Add Contacts</a>
 
-    <!-- Popup Form -->
-    <div id="popupForm" class="popup-form-container">
-        <div class="popup-form-content">
-            <h2>Add Contact</h2>
-            <form id="addContactForm" action="/singup" method="POST">
-                <label for="name">Name:</label><br>
-                <input type="text" id="name" name="name" required><br><br>
-
-                <label for="number">Number:</label><br>
-                <input type="text" id="number" name="number" required><br><br>
-
-                <input type="submit" value="Add Contact" class="btn">
-            </form>
-        </div>
     </div>
 </div>
-
-<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

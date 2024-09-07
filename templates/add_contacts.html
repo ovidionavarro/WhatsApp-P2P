@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp P2P</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='contacts.css') }}">
+</head>
+<body>
+<div class="contacts-container">
+    <a href="/" class="home-btn">Back</a>
+    <div id="popupForm" class="popup-form-container">
+        <div class="popup-form-content">
+            <h2>Add Contact</h2>
+            <form id="addContactForm" action="/add_contacts" method="POST">
+                <label for="name">Name:</label><br>
+                <input type="text" id="name" name="name" required><br><br>
+
+                <label for="number">Number:</label><br>
+                <input type="text" id="number" name="number" required><br><br>
+
+                <input type="submit" value="Add Contact" class="btn">
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
