@@ -65,9 +65,8 @@ def init_app(node: 'ChordNode'):
             name = request.form.get('name')
             number = request.form.get('number')
             resp = node.sing_in(getShaRepr(f"{name}_{number}"), name, number)
-            print(resp)
             if resp != 'True':
-                logging.info(f'33333333333333333333333 user {name}_{number} no exist,')
+                logging.info(f'WARNING!!!!!!!! user {name}_{number} DONT exist,')
             ###crear una pag de error en caso de resp=false
             return redirect(url_for('contacts', name=my_name, number=my_number))
 
