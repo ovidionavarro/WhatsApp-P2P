@@ -23,7 +23,7 @@
         <tr>
             <td>
                 <!-- Hacer el nombre del contacto un enlace que redirija a la página de mensajes -->
-                <a href="{{ url_for('send_message', contact_name=contact.name, contact_number=contact.number) }}">
+                <a href="{{ url_for('send_message',name=name,number=number, contact_name=contact.name, contact_number=contact.number) }}">
                     {{ contact.name }}
                 </a>
             </td>

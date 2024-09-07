@@ -27,7 +27,7 @@ class ChordNode:
         self.data = {}  # Dictionary to store key-value pairs
         self.leader = True
 
-        threading.Thread(target=self.broadcast_listening, daemon=True).start()
+        # threading.Thread(target=self.broadcast_listening, daemon=True).start()
         threading.Thread(target=self.listening_tcp, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
@@ -277,6 +277,15 @@ class ChordNode:
         print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
         return resp
 
+    def send_msg(self, my_info, contact_info, message):
+        node = self.find_succ(getShaRepr(my_info))
+        return node.send_msg(f'{my_info},{contact_info},{message}')
+
+    def _send_msg(self, my_info, contact_info, message):
+        resp=DB.send_msg(my_info, contact_info, message)
+        return resp
+
+
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
         node = self.find_succ(key_hash)
@@ -383,6 +392,14 @@ class ChordNode:
                     number=data[4]
                     logging.info(f'recibiendo {my_name} {my_number} {name} {number} 3333333333 {data}')
                     data_resp = self._add_contact(my_name,my_number,name,number)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
+                elif option == SEND_MSG:
+                    my_info = data[1]
+                    contact_info = data[2]
+                    message = data[3]
+                    data_resp=self._send_msg(my_info, contact_info, message)
                     conn.sendall(data_resp.encode())
                     conn.close()
                     continue

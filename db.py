@@ -54,3 +54,12 @@ class DB:
                 f.write(f'\n{name}_{number}')
             return "True"
         return 'False'
+    
+    @classmethod
+    def send_msg(cls,my_info,contact_info,message):
+        aux_dir=find_user(my_info)
+        if aux_dir:
+            with open(os.path.join('DB',f'{my_info}',f'{contact_info}.txt'),'a') as f:
+                f.write(f'[you]:{message}\n')
+            return 'True'
+        return 'False'

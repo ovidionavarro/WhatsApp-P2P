@@ -66,6 +66,7 @@ def init_app(node: 'ChordNode'):
         return render_template('contacts.html', **context)
 
     @app.route('/add_contacts', methods=['GET', 'POST'])
+
     def add_contacts():
         my_name = request.args.get("name")
         my_number = request.args.get("number")
@@ -90,10 +91,15 @@ def init_app(node: 'ChordNode'):
     def send_message(contact_name, contact_number):
         if request.method == 'POST':
             # Obtén el mensaje del formulario
+            name=request.args.get('name')
+            number=request.args.get('number')
+            my_info = f"{name}_{number}"
+            contact_info = f"{contact_name}_{contact_number}"
+        
             message = request.form.get('message')
 
-            # Aquí puedes implementar la lógica para enviar el mensaje
-            # Por ejemplo, puedes usar la red Chord para enviar el mensaje al contacto
+            node.send_msg(my_info, contact_info, message)    
+
             logging.info(f"Sending message to {contact_name} ({contact_number}): {message}")
 
             # Retorna a la página de contactos después de enviar el mensaje
