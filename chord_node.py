@@ -28,11 +28,11 @@ class ChordNode:
         self.leader = True
 
        # threading.Thread(target=self.broadcast_listening, daemon=True).start()
-        threading.Thread(target=self.listening_tcp, daemon=True).start()
+        # threading.Thread(target=self.listening_tcp, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
-        threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
-        threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
-        threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        # threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
+        # threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
+        # threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
         self.send_broadcast("JOIN")
 
@@ -267,6 +267,15 @@ class ChordNode:
         resp = DB.sing_in(name, number)
         print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
         return resp
+    
+    def add_contact(self,id,my_name,my_number,name,number):
+        node=self.find_succ(int(id))
+        return node.add_contact(f'{my_name},{my_number},{name},{number}').decode()
+
+    def _add_contact(self,my_name,my_number,name,number):
+        resp = DB.add_contact(my_name,my_number,name,number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
+        return resp
 
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
@@ -363,13 +372,21 @@ class ChordNode:
                     number = data[3]
                     endpoint=data[4]
                     data_resp = self._get_contacts(name, number,endpoint)
-
-
                     conn.sendall(data_resp.encode())
-
                     conn.close()
                     continue
 
+                elif option == ADD_CONTACT:
+                    my_name = data[1]
+                    my_number = data[2]
+                    name=data[3]
+                    number=data[4]
+                    logging.info(f'recibiendo {my_name} {my_number} {name} {number} 3333333333 {data}')
+                    data_resp = self._add_contact(my_name,my_number,name,number)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
+                
                 # elif option == STORE_KEY:
                 #     key, value = data[1], data[2]
                 #     self.data[key] = value
