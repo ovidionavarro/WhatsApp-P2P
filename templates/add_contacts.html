@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="contacts-container">
-    <a href="/" class="home-btn">Back</a>
+    <button class="btn" onclick="goBack()">Go Back</button>
     <div id="popupForm" class="popup-form-container">
         <div class="popup-form-content">
             <h2>Add Contact</h2>
@@ -26,3 +26,9 @@
 </div>
 </body>
 </html>
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>

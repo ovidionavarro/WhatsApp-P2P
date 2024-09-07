@@ -21,15 +21,19 @@
         <tbody>
         {% for contact in contacts %}
         <tr>
-            <td>{{ contact.name }}</td>
+            <td>
+                <!-- Hacer el nombre del contacto un enlace que redirija a la página de mensajes -->
+                <a href="{{ url_for('send_message', contact_name=contact.name, contact_number=contact.number) }}">
+                    {{ contact.name }}
+                </a>
+            </td>
             <td>{{ contact.number }}</td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
     <div class="button-container">
-        <a href="{{url_for('add_contacts', id=id, name=name, number=number)}}" class="btn">Add Contacts</a>
-
+        <a href="{{ url_for('add_contacts', id=id, name=name, number=number) }}" class="btn">Add Contacts</a>
     </div>
 </div>
 </body>

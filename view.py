@@ -44,13 +44,25 @@ def init_app(node: 'ChordNode'):
 
         id = getShaRepr(f"{name}_{numb}")
         contacts_list = node.get_contacts(id, name, numb, 'contacts').split('\n')
+
+        # Procesa la lista de contactos para dividir el nombre y número
+        processed_contacts = []
+        for contact in contacts_list:
+            if contact:  # Evita entradas vacías
+                contact_parts = contact.split('_')
+                if len(contact_parts) == 2:
+                    processed_contacts.append({
+                        'name': contact_parts[0],
+                        'number': contact_parts[1]
+                    })
+
         context = {
-            'contacts': contacts_list if not '' in contacts_list else [],
+            'contacts': processed_contacts,
             'id': id,
             'name': name,
             'number': numb
         }
-        logging.info(f'Contactos de {name}-{numb}: {contacts_list}')
+        logging.info(f'Contactos de {name}-{numb}: {processed_contacts}')
         return render_template('contacts.html', **context)
 
     @app.route('/add_contacts', methods=['GET', 'POST'])
@@ -73,6 +85,21 @@ def init_app(node: 'ChordNode'):
             return redirect(url_for('contacts', name=my_name, number=my_number))
 
         return render_template("add_contacts.html")
+
+    @app.route('/send_message/<contact_name>/<contact_number>', methods=['GET', 'POST'])
+    def send_message(contact_name, contact_number):
+        if request.method == 'POST':
+            # Obtén el mensaje del formulario
+            message = request.form.get('message')
+
+            # Aquí puedes implementar la lógica para enviar el mensaje
+            # Por ejemplo, puedes usar la red Chord para enviar el mensaje al contacto
+            logging.info(f"Sending message to {contact_name} ({contact_number}): {message}")
+
+            # Retorna a la página de contactos después de enviar el mensaje
+            return redirect(url_for('contacts', name=request.args.get('name'), number=request.args.get('number')))
+
+        return render_template('send_message.html', contact_name=contact_name, contact_number=contact_number)
 
     return app
 
