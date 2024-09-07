@@ -27,12 +27,12 @@ class ChordNode:
         self.data = {}  # Dictionary to store key-value pairs
         self.leader = True
 
-       # threading.Thread(target=self.broadcast_listening, daemon=True).start()
-        # threading.Thread(target=self.listening_tcp, daemon=True).start()
+        threading.Thread(target=self.broadcast_listening, daemon=True).start()
+        threading.Thread(target=self.listening_tcp, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
-        # threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
-        # threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
-        # threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
+        threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
+        threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
         self.send_broadcast("JOIN")
 
