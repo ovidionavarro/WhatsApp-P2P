@@ -27,7 +27,7 @@ class ChordNode:
         self.data = {}  # Dictionary to store key-value pairs
         self.leader = True
 
-        threading.Thread(target=self.broadcast_listening, daemon=True).start()
+       # threading.Thread(target=self.broadcast_listening, daemon=True).start()
         threading.Thread(target=self.listening_tcp, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
@@ -236,28 +236,37 @@ class ChordNode:
         logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
         self.succ = node
 
-########DATABASE
-    def sing_up(self,id:int,name:str,number:str):
-        logging.info(f'{id} del nuevo user9999999999999999999999999')
-        node=self.find_succ(id)
-        return node.sing_up(f'{id},{name},{number}')#poner .decode()
-    # Store key method to store a key-value pair and replicate to the successor    
-    def _sing_up(self,name,number):
-        resp=DB.register(name,number)
-        print("eeeeeeeeeeeeeeeeeeeeeeeeee",resp)
-        return resp
-    
-    def sing_in(self,id:int,name:str,number:str):
-        logging.info(f' buscando a {id} name ')
-        node=self.find_succ(id)
-        return node.sing_in(f'{id},{name},{number}').decode()
-    
-    def _sing_in(self,name,number):
-        resp=DB.sing_in(name,number)
-        print("eeeeeeeeeeeeeeeeeeeeeeeeee",resp)
-        return resp
-    
+    ########DATABASE
 
+    def _get_contacts(self,name,number,endpoint):
+        resp=DB.get_contacts(name,number,endpoint)
+        print('22222222222222222',resp)
+        return resp
+    def get_contacts(self, id, name, numb,endpoint):
+        logging.info(f"Buscando {endpoint} de {name}")
+        node = self.find_succ(id)
+        return node.get_contacts(f"{id},{name},{numb},{endpoint}").decode()
+
+    def sing_up(self, id: int, name: str, number: str):
+        logging.info(f'{id} del nuevo user9999999999999999999999999')
+        node = self.find_succ(id)
+        return node.sing_up(f'{id},{name},{number}')  # poner .decode()
+
+    # Store key method to store a key-value pair and replicate to the successor
+    def _sing_up(self, name, number):
+        resp = DB.register(name, number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
+        return resp
+
+    def sing_in(self, id: int, name: str, number: str):
+        logging.info(f' buscando a {id} name ')
+        node = self.find_succ(id)
+        return node.sing_in(f'{id},{name},{number}').decode()
+
+    def _sing_in(self, name, number):
+        resp = DB.sing_in(name, number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
+        return resp
 
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
@@ -325,31 +334,42 @@ class ChordNode:
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
                     data_resp = self.closest_preceding_finger(id)
-                
-###########DATABASE
-                elif option==SING_UP:
-                    name=data[2]
-                    number=data[3]
-                    data_resp= self._sing_up(name,number)
-                    if(data_resp=='True'):            
+
+                ###########DATABASE
+                elif option == SING_UP:
+                    name = data[2]
+                    number = data[3]
+                    data_resp = self._sing_up(name, number)
+                    if (data_resp == 'True'):
                         conn.sendall("True".encode())
-                    else :
+                    else:
                         conn.sendall("False".encode())
                     conn.close()
                     continue
-                elif option==SING_IN:
-                    name=data[2]
-                    number=data[3]
-                    data_resp= self._sing_in(name,number)
-                    logging.info(f'entrando a sing in con data {data_resp}')            
-                    if(data_resp=='True'):
+                elif option == SING_IN:
+                    name = data[2]
+                    number = data[3]
+                    data_resp = self._sing_in(name, number)
+                    logging.info(f'entrando a sing in con data {data_resp}')
+                    if (data_resp == 'True'):
                         conn.sendall("True".encode())
-                    else :
+                    else:
                         conn.sendall("False".encode())
                     conn.close()
                     continue
-                
-                
+
+                elif option == GET_CONTACTS:
+                    name = data[2]
+                    number = data[3]
+                    endpoint=data[4]
+                    data_resp = self._get_contacts(name, number,endpoint)
+
+
+                    conn.sendall(data_resp.encode())
+
+                    conn.close()
+                    continue
+
                 # elif option == STORE_KEY:
                 #     key, value = data[1], data[2]
                 #     self.data[key] = value
@@ -362,20 +382,14 @@ class ChordNode:
                     conn.sendall(response)
                 conn.close()
 
-
-
-
-
-
-
     # def store_key(self, key: str, value: str):
-        # key_hash = getShaRepr(key)
-        # node = self.find_succ(key_hash)
-        # node.store_key(key, value)
-        # self.data[key] = value  # Store in the current node
-        # self.succ.store_key(key, value)  # Replicate to the successor
+    # key_hash = getShaRepr(key)
+    # node = self.find_succ(key_hash)
+    # node.store_key(key, value)
+    # self.data[key] = value  # Store in the current node
+    # self.succ.store_key(key, value)  # Replicate to the successor
     # Retrieve key method to get a value for a given key
     # def retrieve_key(self, key: str) -> str:
-        # key_hash = getShaRepr(key)
-        # node = self.find_succ(key_hash)
-        # return node.retrieve_key(key)
+    # key_hash = getShaRepr(key)
+    # node = self.find_succ(key_hash)
+    # return node.retrieve_key(key)

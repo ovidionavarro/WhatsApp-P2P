@@ -83,6 +83,11 @@ class ChordNodeReference:
     def sing_in(self,data):
         resp=self._send_data(SING_IN,data)
         return resp
+
+    def get_contacts(self,data):
+        resp=self._send_data(GET_CONTACTS,data)
+        return resp
+
     # Method to store a key-value pair in the current node
     def store_key(self, key: str, value: str):
         self._send_data(STORE_KEY, f'{key},{value}')
