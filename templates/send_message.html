@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='send_message.css') }}">
+</head>
+<body>
+<div class="message-container">
+    <h1>Chat with {{ contact_name }} ({{ contact_number }})</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="message">Message</label>
+            <textarea name="message" id="message" rows="5" required></textarea>
+        </div>
+        <div class="button-container">
+            <button type="submit" class="btn">Send Message</button>
+        </div>
+    </form>
+    <div class="button-container">
+            <button class="btn" onclick="goBack()">Go Back</button>
+    </div>
+</div>
+</body>
+</html>
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>

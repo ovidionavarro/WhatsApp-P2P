@@ -364,9 +364,11 @@ class ChordNode:
                     endpoint=data[4]
                     data_resp = self._get_contacts(name, number,endpoint)
 
-
-                    conn.sendall(data_resp.encode())
-
+                    try:
+                        conn.sendall(data_resp.encode())
+                    except Exception as e:
+                        logging.info(f"{e}")
+                        pass
                     conn.close()
                     continue
 
