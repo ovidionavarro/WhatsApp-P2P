@@ -276,12 +276,12 @@ class ChordNode:
         resp = DB.add_contact(my_name,my_number,name,number)
         print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
         return resp
-
+#safdsf
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
         node = self.find_succ(key_hash)
         node.store_key(key, value)
-        self.data[key] = value  # Store in the current node
+        self.data[key] = value  # Store in the current nod
         self.succ.store_key(key, value)  # Replicate to the successor
 
     # Retrieve key method to get a value for a given key
