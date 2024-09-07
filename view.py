@@ -89,15 +89,17 @@ def init_app(node: 'ChordNode'):
 
     @app.route('/send_message/<contact_name>/<contact_number>', methods=['GET', 'POST'])
     def send_message(contact_name, contact_number):
+        name=request.args.get('name')
+        number=request.args.get('number')
+        my_info = f"{name}_{number}"
+        id=getShaRepr(my_info)
+        contact_info = f"{contact_name}_{contact_number}"
+        state_chat=node.get_contacts(id, name,number , contact_info).split('\n')
         if request.method == 'POST':
             # Obtén el mensaje del formulario
-            name=request.args.get('name')
-            number=request.args.get('number')
-            my_info = f"{name}_{number}"
-            contact_info = f"{contact_name}_{contact_number}"
         
             message = request.form.get('message')
-
+            print(333333333333333333333333333333333333333333333333333,state_chat)
             node.send_msg(my_info, contact_info, message)    
             node.recv_msg(contact_info, my_info, message)    
 
@@ -105,8 +107,12 @@ def init_app(node: 'ChordNode'):
 
             # Retorna a la página de contactos después de enviar el mensaje
             return redirect(url_for('contacts', name=request.args.get('name'), number=request.args.get('number')))
-
-        return render_template('send_message.html', contact_name=contact_name, contact_number=contact_number)
+        context={
+            'id':id,
+            'name':name,
+            'state':state_chat
+        }
+        return render_template('send_message.html', contact_name=contact_name, contact_number=contact_number,**context)
 
     return app
 

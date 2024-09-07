@@ -10,6 +10,10 @@ body {
     height: 100vh;
 }
 
+.msg{
+    font-weight: bold;
+  }
+
 /* Contenedor principal del formulario */
 .message-container {
     background-color: #ffffff;
