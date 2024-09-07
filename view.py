@@ -99,6 +99,7 @@ def init_app(node: 'ChordNode'):
             message = request.form.get('message')
 
             node.send_msg(my_info, contact_info, message)    
+            node.recv_msg(contact_info, my_info, message)    
 
             logging.info(f"Sending message to {contact_name} ({contact_number}): {message}")
 

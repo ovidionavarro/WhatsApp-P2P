@@ -284,7 +284,14 @@ class ChordNode:
     def _send_msg(self, my_info, contact_info, message):
         resp=DB.send_msg(my_info, contact_info, message)
         return resp
+    
+    def recv_msg(self, contact_info, my_info, message):
+        node = self.find_succ(getShaRepr(contact_info))
+        return node.recv_msg(f'{contact_info},{my_info},{message}')
 
+    def _recv_msg(self, contact_info, my_info, message):
+        resp=DB.recv_msg(contact_info, my_info, message)
+        return resp
 
     def store_key(self, key: str, value: str):
         key_hash = getShaRepr(key)
@@ -403,7 +410,14 @@ class ChordNode:
                     conn.sendall(data_resp.encode())
                     conn.close()
                     continue
-                
+                elif option == RECV_MSG:
+                    contact_info = data[1]
+                    my_info = data[2]
+                    message = data[3]
+                    data_resp=self._recv_msg(contact_info, my_info, message)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
                 # elif option == STORE_KEY:
                 #     key, value = data[1], data[2]
                 #     self.data[key] = value

@@ -58,8 +58,25 @@ class DB:
     @classmethod
     def send_msg(cls,my_info,contact_info,message):
         aux_dir=find_user(my_info)
+        logging.info(f'enviando mensaje a {contact_info}aaaaaaaaaaaaaaaaaaaa aaaaaaa1111111 ')      
         if aux_dir:
             with open(os.path.join('DB',f'{my_info}',f'{contact_info}.txt'),'a') as f:
                 f.write(f'[you]:{message}\n')
+            return 'True'
+        return 'False'
+
+    @classmethod
+    def recv_msg(cls,contact_info,my_info,message):
+        my_name=my_info.split('_')[0]
+        aux_dir=find_user(contact_info)
+        if aux_dir:
+            if not os.path.exists(os.path.join('DB',f'{contact_info}',f'{my_info}.txt')):
+                with open(os.path.join('DB',f'{contact_info}',f'{my_info}.txt'),'w') as f:
+                    f.write('')
+                with open(os.path.join('DB', f'{contact_info}','contacts.txt'),'a') as f:
+                    f.write(f'\n{my_info}')
+
+            with open(os.path.join('DB',f'{contact_info}',f'{my_info}.txt'),'a') as f:
+                f.write(f'[{my_name}]:{message}\n')
             return 'True'
         return 'False'

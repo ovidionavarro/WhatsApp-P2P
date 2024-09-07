@@ -94,6 +94,9 @@ class ChordNodeReference:
     def send_msg(self,data):
         resp=self._send_data(SEND_MSG,data)
         return resp
+    def recv_msg(self,data):
+        resp=self._send_data(RECV_MSG,data)
+        return resp
     # Method to store a key-value pair in the current node
     def store_key(self, key: str, value: str):
         self._send_data(STORE_KEY, f'{key},{value}')
