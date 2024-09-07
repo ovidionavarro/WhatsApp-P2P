@@ -42,3 +42,15 @@ class DB:
                 return f.read().strip()
         else:
             print(aux_dir,33333333333333333)
+
+    @classmethod
+    def add_contact(cls,my_name,my_number,name,number):
+        aux_dir=find_user(f'{my_name}_{my_number}')
+        if aux_dir:
+
+            with open(os.path.join('DB',f'{my_name}_{my_number}', f'{name}_{number}.txt'),'w') as f:
+                f.write('')
+            with open(os.path.join('DB', f'{my_name}_{my_number}','contacts.txt'),'a') as f:
+                f.write(f'\n{name}_{number}')
+            return "True"
+        return 'False'
