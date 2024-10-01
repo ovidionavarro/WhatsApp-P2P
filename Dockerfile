@@ -9,6 +9,7 @@ COPY chord_node_reference.py .
 COPY utils.py .
 COPY codes.py .
 COPY view.py .
+COPY db.py .
 # Copiar las plantillas HTML y archivos estáticos
 COPY templates/ templates/
 COPY static/ static/

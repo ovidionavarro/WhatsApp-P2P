@@ -27,7 +27,7 @@ class ChordNode:
         self.data = {}  # Dictionary to store key-value pairs
         self.leader = True
 
-        # threading.Thread(target=self.broadcast_listening, daemon=True).start()
+        threading.Thread(target=self.broadcast_listening, daemon=True).start()
         threading.Thread(target=self.listening_tcp, daemon=True).start()
         # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
