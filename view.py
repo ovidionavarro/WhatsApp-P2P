@@ -33,6 +33,7 @@ def init_app(node: 'ChordNode'):
             name = request.form.get('name')
             number = request.form.get('number')
             resp = node.sing_up(getShaRepr(f"{name}_{number}"), name, number)
+            print(getShaRepr(f"{name}_{number}"))
             ###crear una pag de error en caso de resp=false
             return redirect(url_for('contacts', name=name, number=number))
         return render_template("singup.html")
