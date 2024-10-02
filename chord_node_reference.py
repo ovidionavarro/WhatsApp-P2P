@@ -106,6 +106,10 @@ class ChordNodeReference:
         response = self._send_data(RETRIEVE_KEY, key).decode()
         return response
 
+
+    def request_data(self,id:int):
+        response=self._send_data(REQUEST_DATA,f'{id}')
+        return response
     def __str__(self) -> str:
         return f'{self.id},{self.ip},{self.port}'
 

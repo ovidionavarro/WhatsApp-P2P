@@ -7,6 +7,7 @@ from chord_node_reference import ChordNodeReference
 from codes import *
 from utils import getShaRepr
 from db import DB
+from handle_data import HandleData
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
@@ -21,6 +22,7 @@ class ChordNode:
         self.succ = self.ref  # Initial successor is itself
         self.pred = None  # Initially no predecessor
         self.pred_2 = None
+        self.handler=HandleData(self.id)
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
@@ -36,6 +38,11 @@ class ChordNode:
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
         self.send_broadcast("JOIN")
 
+    def _request_data(self):
+        if self.succ.id!=self.id:
+            response_succ=self.succ.request_data(f'{self.id}').decode()
+            print('@@@@@@@@@@@@@@',response_succ)
+            self.handler.create(response_succ)
     def send_tcp(self, ip, port=8001):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(5.0)
@@ -145,7 +152,8 @@ class ChordNode:
         else:
             self.succ = self.ref
             self.pred = None
-
+        print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$llamando al req data')
+        self._request_data()
     # Stabilize method to periodically verify and update the successor and predecessor
     def stabilize(self):
         while True:
@@ -424,7 +432,14 @@ class ChordNode:
                 # elif option == RETRIEVE_KEY:
                 #     key = data[1]
                 #     data_resp = self.data.get(key, '')
-
+                elif option==REQUEST_DATA:
+                    id=int(data[1])
+                    # id=int(ids[0])
+                    # id_pred=int(ids[1])
+                    data_resp=self.handler.data(True,id).encode()
+                    conn.sendall(data_resp)
+                    conn.close()
+                    continue
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
                     conn.sendall(response)

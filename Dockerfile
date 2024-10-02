@@ -10,10 +10,12 @@ COPY utils.py .
 COPY codes.py .
 COPY view.py .
 COPY db.py .
+COPY handle_data.py .
+
 # Copiar las plantillas HTML y archivos estáticos
 COPY templates/ templates/
 COPY static/ static/
-
+COPY DB/ DB/
 # Instalar Flask
 RUN pip install flask
 

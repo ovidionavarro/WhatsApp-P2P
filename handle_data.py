@@ -4,7 +4,7 @@ from utils import getShaRepr,rem_dir,create_folder
 current_directory = os.getcwd()
 class HandleData():
     def __init__(self, id:int):
-        self._id = id
+        self.id = id
         self.collector=[]
     
     
@@ -14,11 +14,14 @@ class HandleData():
         else:  # The interval wraps around 0
             return start < k or k <= end
 
-    def data(self,delete:bool,id=None):
+    def data(self,delete:bool,id):
         ret=''
         for user in os.listdir(os.path.join('DB')):
+            print(f'########################data  {getShaRepr(f"{user}")}')
             # print (getShaRepr(f"{user}"))
-            if id==None or id>getShaRepr(f"{user}"):
+            if id==None or not self._inbetween(getShaRepr(f"{user}"),id,self.id):
+                print(f'  {getShaRepr(f"{user}")}')
+                print(not self._inbetween(getShaRepr(f"{user}"),id,self.id))
                 ret+=f'{user}'
                 for file in os.listdir(os.path.join('DB',user)):
                   with open(os.path.join('DB',user,file),'r') as f:
@@ -49,6 +52,7 @@ class HandleData():
         self.collector=[]
 
 
-# print(a.data(False,112))
+a=HandleData(15)
+print(a.data(False,4))
 # create_folder('D:\\Escuela\\4to2\\SD\\WhatsApp-P2P\\DB\\Pedro_1234563')
 # 'Juan_123456/contacts.txt/Tal_123456/Tal_123456.txt/[you]:asdasdsdasd[Tal]:qwdwd|Tal_123456/contacts.txt/Juan_123456/Juan_123456.txt/[Juan]:asdasdsdasd[you]:qwdwd|'
