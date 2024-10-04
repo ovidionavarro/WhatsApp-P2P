@@ -51,8 +51,21 @@ class HandleData():
                 rem_dir(i)
         self.collector=[]
 
+    def data_all(self):
+        ret=''
+        for user in os.listdir(os.path.join('DB')):
+            print(f'########################data  {getShaRepr(f"{user}")}')
+            # print (getShaRepr(f"{user}"))
+            ret+=f'{user}'
+            for file in os.listdir(os.path.join('DB',user)):
+              with open(os.path.join('DB',user,file),'r') as f:
+                ret+=f'/{file}/{f.read()}'
+            ret+='|'
+            self.collector.append(os.path.join(current_directory,'DB',user))
+        
+        return ret
 
-a=HandleData(15)
-print(a.data(False,4))
+# a=HandleData(15)
+# print(a.data_all())
 # create_folder('D:\\Escuela\\4to2\\SD\\WhatsApp-P2P\\DB\\Pedro_1234563')
 # 'Juan_123456/contacts.txt/Tal_123456/Tal_123456.txt/[you]:asdasdsdasd[Tal]:qwdwd|Tal_123456/contacts.txt/Juan_123456/Juan_123456.txt/[Juan]:asdasdsdasd[you]:qwdwd|'

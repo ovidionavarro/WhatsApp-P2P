@@ -22,6 +22,8 @@ class ChordNode:
         self.succ = self.ref  # Initial successor is itself
         self.pred = None  # Initially no predecessor
         self.pred_2 = None
+        self.info_1=''
+        self.info_2=''
         self.handler=HandleData(self.id)
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
@@ -215,17 +217,22 @@ class ChordNode:
                 if self.pred:
                     resp = self.pred.check_predecessor()
                     logging.info(f" respuesta de pred: {resp}")
-                    if resp == b'':
+                    if resp == b'':#respondio que NO exsite
+                        #create data pred1
                         if self.id == self.pred_2.id:
                             self.pred = None
                             self.succ = self.ref
+                            
                         else:
                             resp1 = self.pred_2.check_predecessor()
                             logging.info(f" respuesta de pred: {resp}")
                             if resp1 == b'':
+                                ######create data de pred2
                                 ##tirar boadcast
                                 logging.info("No se encontro pred2 Preguntando broadcast!!!!!!!!!")
                                 self.send_broadcast(f"ASK_SUCC,{self.pred_2.id}")
+
+                                
 
                             else:
                                 # actualizar mi predecesor y su sucesor
