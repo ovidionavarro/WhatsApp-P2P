@@ -250,6 +250,8 @@ class ChordNode:
                             logging.info(f" respuesta de pred: {resp}")
                             if resp1 == b'':
                                 ######create data de pred2
+                                self.handler.create(self.info_2)
+                                self.info_2=''
                                 ##tirar boadcast
                                 logging.info("No se encontro pred2 Preguntando broadcast!!!!!!!!!")
                                 self.send_broadcast(f"ASK_SUCC,{self.pred_2.id}")
