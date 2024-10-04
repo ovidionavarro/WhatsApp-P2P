@@ -37,7 +37,10 @@ class ChordNode:
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
         threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        threading.Thread(target=self.send_data_pred, daemon=True).start()  # Start fix fingers thread
+        
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
+        
         self.send_broadcast("JOIN")
 
     def _request_data(self):
@@ -210,6 +213,23 @@ class ChordNode:
                 logging.info(f"Error in fix_fingers: {e}")
             time.sleep(5)
 
+    def send_data_pred(self):
+        while True:
+            if self.pred:
+                try:
+                    self.info_1=self.pred.send_data_pred().decode()
+                    logging.info(f'data de mi pred {self.info_1}')
+                except Exception as e:
+                    logging.info(f"Error in sen data pred: {e}")
+
+            if self.pred_2:
+                if self.pred_2.id!=self.id:
+                    try:
+                        self.info_2=self.pred_2.send_data_pred().decode()
+                        logging.info(f'data de mi pred_2{self.info_2}')
+                    except Exception as e:
+                        logging.info(f"Error in sen data pred2: {e}")
+            time.sleep(7)
     # Check predecessor method to periodically verify if the predecessor is alive
     def check_predecessor(self):
         while True:
@@ -444,6 +464,11 @@ class ChordNode:
                     # id=int(ids[0])
                     # id_pred=int(ids[1])
                     data_resp=self.handler.data(True,id).encode()
+                    conn.sendall(data_resp)
+                    conn.close()
+                    continue
+                elif option==SEND_DATA_PRED:
+                    data_resp=self.handler.data_all().encode()
                     conn.sendall(data_resp)
                     conn.close()
                     continue

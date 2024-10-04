@@ -106,7 +106,9 @@ class ChordNodeReference:
         response = self._send_data(RETRIEVE_KEY, key).decode()
         return response
 
-
+    def send_data_pred(self):
+        response=self._send_data(SEND_DATA_PRED)
+        return response
     def request_data(self,id:int):
         response=self._send_data(REQUEST_DATA,f'{id}')
         return response

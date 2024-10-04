@@ -60,9 +60,7 @@ class HandleData():
             for file in os.listdir(os.path.join('DB',user)):
               with open(os.path.join('DB',user,file),'r') as f:
                 ret+=f'/{file}/{f.read()}'
-            ret+='|'
-            self.collector.append(os.path.join(current_directory,'DB',user))
-        
+            ret+='|'        
         return ret
 
 # a=HandleData(15)
