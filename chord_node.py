@@ -239,6 +239,8 @@ class ChordNode:
                     logging.info(f" respuesta de pred: {resp}")
                     if resp == b'':#respondio que NO exsite
                         #create data pred1
+                        self.handler.create(self.info_1)
+                        self.info_1=''
                         if self.id == self.pred_2.id:
                             self.pred = None
                             self.succ = self.ref
