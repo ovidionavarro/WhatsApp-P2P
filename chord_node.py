@@ -2,185 +2,364 @@ import socket
 import threading
 import sys
 import time
-import hashlib
 import logging
+from chord_node_reference import ChordNodeReference
+from codes import *
+from utils import getShaRepr
+from db import DB
+from handle_data import HandleData
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
 
-# Operation codes
-FIND_SUCCESSOR = 1
-FIND_PREDECESSOR = 2
-GET_SUCCESSOR = 3
-GET_PREDECESSOR = 4
-NOTIFY = 5
-CHECK_PREDECESSOR = 6
-CLOSEST_PRECEDING_FINGER = 7
-
-
-def getShaRepr(data: str):
-    return int(hashlib.sha1(data.encode()).hexdigest(), 16)
-
-
-class ChordNodeReference:
-    def __init__(self, id: int, ip: str, port: int = 8001):
-        self.id = getShaRepr(ip)
-        self.ip = ip
-        self.port = port
-
-    def _send_data(self, op: int, data: str = None) -> bytes:
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((self.ip, self.port))
-                s.sendall(f'{op},{data}'.encode('utf-8'))
-                return s.recv(1024)
-        except Exception as e:
-            logging.error(f"Error sending data: {e}")
-            return b''
-
-    def find_successor(self, id: int) -> 'ChordNodeReference':
-        response = self._send_data(FIND_SUCCESSOR, str(id)).decode().split(',')
-        return ChordNodeReference(int(response[0]), response[1], self.port)
-
-    def find_predecessor(self, id: int) -> 'ChordNodeReference':
-        response = self._send_data(FIND_PREDECESSOR, str(id)).decode().split(',')
-        return ChordNodeReference(int(response[0]), response[1], self.port)
-
-    @property
-    def succ(self) -> 'ChordNodeReference':
-        response = self._send_data(GET_SUCCESSOR).decode().split(',')
-        return ChordNodeReference(int(response[0]), response[1], self.port)
-
-    @property
-    def pred(self) -> 'ChordNodeReference':
-        response = self._send_data(GET_PREDECESSOR).decode().split(',')
-        return ChordNodeReference(int(response[0]), response[1], self.port)
-
-    def notify(self, node: 'ChordNodeReference'):
-        self._send_data(NOTIFY, f'{node.id},{node.ip}')
-
-    def check_predecessor(self):
-        self._send_data(CHECK_PREDECESSOR)
-
-    def closest_preceding_finger(self, id: int) -> 'ChordNodeReference':
-        response = self._send_data(CLOSEST_PRECEDING_FINGER, str(id)).decode().split(',')
-        return ChordNodeReference(int(response[0]), response[1], self.port)
-
-    def __str__(self) -> str:
-        return f'{self.id},{self.ip},{self.port}'
-
-    def __repr__(self) -> str:
-        return str(self)
-
 
 class ChordNode:
-    def __init__(self, id: int, ip: str, port: int = 8001, m: int = 160):
+    def __init__(self, ip: str, port: int = 8001, m: int = 160):
         self.id = getShaRepr(ip)
         self.ip = ip
         self.port = port
-        self.ref = ChordNodeReference(self.id, self.ip, self.port)
+        self.ref = ChordNodeReference(self.ip, self.port)
         self.succ = self.ref  # Initial successor is itself
         self.pred = None  # Initially no predecessor
+        self.pred_2 = None
+        self.info_1=''
+        self.info_2=''
+        self.handler=HandleData(self.id)
         self.m = m  # Number of bits in the hash/key space
         self.finger = [self.ref] * self.m  # Finger table
         self.next = 0  # Finger table index to fix next
+        self.data = {}  # Dictionary to store key-value pairs
+        self.leader = True
 
-        logging.info(f"Node initialized with ID {self.id} and IP {self.ip}")
-
+        threading.Thread(target=self.broadcast_listening, daemon=True).start()
+        threading.Thread(target=self.listening_tcp, daemon=True).start()
+        # Start background threads for stabilization, fixing fingers, and checking predecessor
         threading.Thread(target=self.stabilize, daemon=True).start()  # Start stabilize thread
         threading.Thread(target=self.fix_fingers, daemon=True).start()  # Start fix fingers thread
         threading.Thread(target=self.check_predecessor, daemon=True).start()  # Start check predecessor thread
+        threading.Thread(target=self.send_data_pred, daemon=True).start()  # Start fix fingers thread
+        
         threading.Thread(target=self.start_server, daemon=True).start()  # Start server thread
+        
+        self.send_broadcast("JOIN")
 
+    def _request_data(self):
+        if self.succ.id!=self.id:
+            response_succ=self.succ.request_data(f'{self.id}').decode()
+            print('@@@@@@@@@@@@@@',response_succ)
+            self.handler.create(response_succ)
+    def send_tcp(self, ip, port=8001):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(5.0)
+            s.connect((ip, port))
+            s.sendall(f'{UPDATE_PRED}'.encode('utf-8'))
+            s.close()
+
+    def listening_tcp(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((self.ip, self.port + 1))
+            s.listen(10)
+            while True:
+                conn, addr = s.accept()
+                data = conn.recv(1024).decode().split(',')
+                option = int(data[0])
+                logging.info(f"option: {option}")
+                if option == ACCEPTED:
+                    cnr = ChordNodeReference(addr[0])
+                    self.join(cnr)
+                    logging.info("loginnnnnnnn")
+                    conn.close()
+
+    def broadcast_listening(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', 8001))
+
+        while True:
+            logging.info("Esperando broadcast....")
+            data, addr = sock.recvfrom(1024)
+            data = data.decode().split(',')
+            logging.info(f"Mensaje: {data[0]} de: {addr[0]}")
+            if data[0] == "JOIN" and addr[0] != self.ip and self.leader:
+                self.accept_node(addr[0])
+            if data[0] == "ASK_SUCC" and self.succ.id == int(data[1]) and self.ip != addr[0]:
+                logging.info("Actualizando Succ por no existe pred2 del remitente")
+                self.succ = ChordNodeReference(addr[0])
+                self.succ.update_pred(self.ref)
+                logging.info("Mensaje envidao 111111111111111111111")
+
+    def send_broadcast(self, mensaje, direccion_broadcast="255.255.255.255"):
+
+        # Crear un socket UDP
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        # Permitir la reutilización de la dirección
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Habilitar la opción para enviar mensajes broadcast
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        # Enviar el mensaje broadcast
+        sock.sendto(mensaje.encode(), (direccion_broadcast, 8001))
+        logging.info(f"Mensaje broadcast enviado: {mensaje}")
+
+        # Cerrar el socket
+        sock.close()
+
+    def accept_node(self, ip, port=8001):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(5.0)
+            s.connect((ip, port + 1))
+            s.sendall(f'{ACCEPTED}'.encode('utf-8'))
+            s.close()
+
+    # Helper method to check if a value is in the range (start, end]
     def _inbetween(self, k: int, start: int, end: int) -> bool:
-        """Check if k is in the interval (start, end]."""
         if start < end:
             return start < k <= end
         else:  # The interval wraps around 0
             return start < k or k <= end
 
+    # Method to find the successor of a given id
     def find_succ(self, id: int) -> 'ChordNodeReference':
         node = self.find_pred(id)  # Find predecessor of id
         return node.succ  # Return successor of that node
 
+    # Method to find the predecessor of a given id
     def find_pred(self, id: int) -> 'ChordNodeReference':
         node = self
         while not self._inbetween(id, node.id, node.succ.id):
             node = node.closest_preceding_finger(id)
         return node
 
+    # Method to find the closest preceding finger of a given id
     def closest_preceding_finger(self, id: int) -> 'ChordNodeReference':
         for i in range(self.m - 1, -1, -1):
             if self.finger[i] and self._inbetween(self.finger[i].id, self.id, id):
                 return self.finger[i]
         return self.ref
 
+    # Method to join a Chord network using 'node' as an entry point
     def join(self, node: 'ChordNodeReference'):
-        """Join a Chord network using 'node' as an entry point."""
         if node:
-            self.pred = None
-            self.succ = node.find_successor(self.id)
-            self.succ.notify(self.ref)
+            logging.info(f"nodoooooooooooooooooooo :{node.id}  succcccccc :{node.succ.id}")
+            if (
+                    node.id == node.succ.id):  # aki solo entra cuando id = id del succersor osea cuando unido yo soy mi succesor
+                self.succ = node
+                self.pred = node
+                self.succ.notify(self.ref)
+                self.succ.case_basic(self.ref)
+            else:
+                self.pred = None
+                self.succ = node.find_successor(self.id)
+                self.succ.notify(self.ref)
         else:
             self.succ = self.ref
             self.pred = None
-
+        print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$llamando al req data')
+        self._request_data()
+    # Stabilize method to periodically verify and update the successor and predecessor
     def stabilize(self):
-        """Regular check for correct Chord structure."""
         while True:
             try:
                 if self.succ.id != self.id:
-                    logging.info('Stabilizing...')
+                    logging.info('stabilize')
                     x = self.succ.pred
+                    logging.info(f"esto es el stabilize {x.id}")
                     if x.id != self.id:
+                        logging.info(x)
                         if x and self._inbetween(x.id, self.id, self.succ.id):
                             self.succ = x
                         self.succ.notify(self.ref)
             except Exception as e:
-                logging.error(f"Error in stabilize: {e}")
+                logging.info(f"Error in stabilize: {e}")
 
-            logging.info(f"Successor: {self.succ} Predecessor: {self.pred}")
-            time.sleep(10)
+            logging.info(f"successor : {self.succ} predecessor : {self.pred} ")
 
+            if (self.id >= self.succ.id):
+                self.leader = True
+                logging.info(f"leader change {self.id} >= {self.succ.id}")
+            else:
+                self.leader = False
+
+            fing = ''
+            for i in range(0, m):
+                fing += f"[{self.finger[i].id}]"
+            logging.info(f"finger:{fing}")
+            time.sleep(5)
+
+    # Notify method to inform the node about another node
     def notify(self, node: 'ChordNodeReference'):
         if node.id == self.id:
             pass
         if not self.pred or self._inbetween(node.id, self.pred.id, self.id):
             self.pred = node
+            self.pred_2 = self.pred.pred
 
+    def case_basic(self, node: 'ChordNodeReference'):
+        logging.info(f"casobase recibiendo nodo: {node.id}")
+        self.succ = node
+
+    # Fix fingers method to periodically update the finger table
     def fix_fingers(self):
         while True:
             try:
-                self.next = (self.next + 1) % self.m
-                self.finger[self.next] = self.find_succ((self.id + 2 ** self.next) % (2 ** self.m))
+                self.next += 1
+                if self.next >= self.m:
+                    self.next = 0
+                self.finger[self.next] = self.find_succ((self.id + 2 ** self.next) % 2 ** self.m)
             except Exception as e:
-                logging.error(f"Error in fix_fingers: {e}")
-            time.sleep(1)
+                logging.info(f"Error in fix_fingers: {e}")
+            time.sleep(5)
 
+    def send_data_pred(self):
+        while True:
+            if self.pred:
+                try:
+                    self.info_1=self.pred.send_data_pred().decode()
+                    logging.info(f'data de mi pred {self.info_1}')
+                except Exception as e:
+                    logging.info(f"Error in sen data pred: {e}")
+
+            if self.pred_2:
+                if self.pred_2.id!=self.id:
+                    try:
+                        self.info_2=self.pred_2.send_data_pred().decode()
+                        logging.info(f'data de mi pred_2{self.info_2}')
+                    except Exception as e:
+                        logging.info(f"Error in sen data pred2: {e}")
+            time.sleep(7)
+    # Check predecessor method to periodically verify if the predecessor is alive
     def check_predecessor(self):
         while True:
             try:
                 if self.pred:
-                    self.pred.check_predecessor()
+                    resp = self.pred.check_predecessor()
+                    logging.info(f" respuesta de pred: {resp}")
+                    if resp == b'':#respondio que NO exsite
+                        #create data pred1
+                        self.handler.create(self.info_1)
+                        self.info_1=''
+                        if self.id == self.pred_2.id:
+                            self.pred = None
+                            self.succ = self.ref
+                            
+                        else:
+                            resp1 = self.pred_2.check_predecessor()
+                            logging.info(f" respuesta de pred: {resp}")
+                            if resp1 == b'':
+                                ######create data de pred2
+                                self.handler.create(self.info_2)
+                                self.info_2=''
+                                ##tirar boadcast
+                                logging.info("No se encontro pred2 Preguntando broadcast!!!!!!!!!")
+                                self.send_broadcast(f"ASK_SUCC,{self.pred_2.id}")
+
+                                
+
+                            else:
+                                # actualizar mi predecesor y su sucesor
+                                logging.info(f"1111111111 cambiando predecesor {self.pred.id} -> {self.pred_2.id}")
+                                self.pred = self.pred_2
+                                self.pred_2.update_succ(self.ref)
+                                self.pred_2 = self.pred.pred
+                    self.pred_2 = self.pred.pred
+                    logging.info(f"pred_pred :{self.pred_2.id}")
             except Exception as e:
                 self.pred = None
-            time.sleep(10)
 
+            time.sleep(5)
+
+    def update_succ(self, node: 'ChordNodeReference'):
+        logging.info(f"22222222222222 actualizando mi succ {self.succ.id} a {node.id}")
+        self.succ = node
+
+    ########DATABASE
+
+    def _get_contacts(self,name,number,endpoint):
+        resp=DB.get_contacts(name,number,endpoint)
+        print('22222222222222222',resp)
+        return resp
+    def get_contacts(self, id, name, numb,endpoint):
+        logging.info(f"Buscando {endpoint} de {name}")
+        node = self.find_succ(id)
+        return node.get_contacts(f"{id},{name},{numb},{endpoint}").decode()
+
+    def sing_up(self, id: int, name: str, number: str):
+        logging.info(f'{id} del nuevo user9999999999999999999999999')
+        node = self.find_succ(id)
+        return node.sing_up(f'{id},{name},{number}')  # poner .decode()
+
+    # Store key method to store a key-value pair and replicate to the successor
+    def _sing_up(self, name, number):
+        resp = DB.register(name, number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
+        return resp
+
+    def sing_in(self, id: int, name: str, number: str):
+        logging.info(f' buscando a {id} name ')
+        node = self.find_succ(id)
+        return node.sing_in(f'{id},{name},{number}').decode()
+
+    def _sing_in(self, name, number):
+        resp = DB.sing_in(name, number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
+        return resp
+    
+    def add_contact(self,id,my_name,my_number,name,number):
+        node=self.find_succ(int(id))
+        return node.add_contact(f'{my_name},{my_number},{name},{number}').decode()
+
+    def _add_contact(self,my_name,my_number,name,number):
+        resp = DB.add_contact(my_name,my_number,name,number)
+        print("eeeeeeeeeeeeeeeeeeeeeeeeee", resp)
+        return resp
+
+    def send_msg(self, my_info, contact_info, message):
+        node = self.find_succ(getShaRepr(my_info))
+        return node.send_msg(f'{my_info},{contact_info},{message}')
+
+    def _send_msg(self, my_info, contact_info, message):
+        resp=DB.send_msg(my_info, contact_info, message)
+        return resp
+    
+    def recv_msg(self, contact_info, my_info, message):
+        node = self.find_succ(getShaRepr(contact_info))
+        return node.recv_msg(f'{contact_info},{my_info},{message}')
+
+    def _recv_msg(self, contact_info, my_info, message):
+        resp=DB.recv_msg(contact_info, my_info, message)
+        return resp
+
+    def store_key(self, key: str, value: str):
+        key_hash = getShaRepr(key)
+        node = self.find_succ(key_hash)
+        node.store_key(key, value)
+        self.data[key] = value  # Store in the current node
+        self.succ.store_key(key, value)  # Replicate to the successor
+
+    # Retrieve key method to get a value for a given key
+    def retrieve_key(self, key: str) -> str:
+        key_hash = getShaRepr(key)
+        node = self.find_succ(key_hash)
+        return node.retrieve_key(key)
+
+    # Start server method to handle incoming requests
     def start_server(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((self.ip, self.port))
             s.listen(10)
-            logging.info(f"Server started at {self.ip}:{self.port}")
 
             while True:
                 conn, addr = s.accept()
-                logging.info(f'New connection from {addr}')
 
                 data = conn.recv(1024).decode().split(',')
 
                 data_resp = None
                 option = int(data[0])
+                logging.info(f'new connection from {addr},option:{option}')
 
                 if option == FIND_SUCCESSOR:
                     id = int(data[1])
@@ -195,28 +374,121 @@ class ChordNode:
                 elif option == NOTIFY:
                     id = int(data[1])
                     ip = data[2]
-                    self.notify(ChordNodeReference(id, ip, self.port))
+                    self.notify(ChordNodeReference(ip, self.port))
+                elif option == UPDATE_SUCC:
+                    id = int(data[1])
+                    ip = data[2]
+                    self.update_succ(ChordNodeReference(ip, self.port))
+
+                elif option == BASE:
+                    id = int(data[1])
+                    ip = data[2]
+                    self.case_basic(ChordNodeReference(ip, self.port))
                 elif option == CHECK_PREDECESSOR:
-                    pass
+                    conn.sendall("True".encode())
+                    conn.close()
+                    continue
+
+                elif option == UPDATE_PRED:
+                    logging.info("Updating Pred!!!!!!!!!!!!!!!")
+                    id = int(data[1])
+                    ip = data[2]
+                    self.pred = ChordNodeReference(ip, self.port)
+
                 elif option == CLOSEST_PRECEDING_FINGER:
                     id = int(data[1])
                     data_resp = self.closest_preceding_finger(id)
 
+                ###########DATABASE
+                elif option == SING_UP:
+                    name = data[2]
+                    number = data[3]
+                    data_resp = self._sing_up(name, number)
+                    if (data_resp == 'True'):
+                        conn.sendall("True".encode())
+                    else:
+                        conn.sendall("False".encode())
+                    conn.close()
+                    continue
+                elif option == SING_IN:
+                    name = data[2]
+                    number = data[3]
+                    data_resp = self._sing_in(name, number)
+                    logging.info(f'entrando a sing in con data {data_resp}')
+                    if (data_resp == 'True'):
+                        conn.sendall("True".encode())
+                    else:
+                        conn.sendall("False".encode())
+                    conn.close()
+                    continue
+
+                elif option == GET_CONTACTS:
+                    name = data[2]
+                    number = data[3]
+                    endpoint=data[4]
+                    data_resp = self._get_contacts(name, number,endpoint)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
+
+                elif option == ADD_CONTACT:
+                    my_name = data[1]
+                    my_number = data[2]
+                    name=data[3]
+                    number=data[4]
+                    logging.info(f'recibiendo {my_name} {my_number} {name} {number} 3333333333 {data}')
+                    data_resp = self._add_contact(my_name,my_number,name,number)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
+                elif option == SEND_MSG:
+                    my_info = data[1]
+                    contact_info = data[2]
+                    message = data[3]
+                    data_resp=self._send_msg(my_info, contact_info, message)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
+                elif option == RECV_MSG:
+                    contact_info = data[1]
+                    my_info = data[2]
+                    message = data[3]
+                    data_resp=self._recv_msg(contact_info, my_info, message)
+                    conn.sendall(data_resp.encode())
+                    conn.close()
+                    continue
+                # elif option == STORE_KEY:
+                #     key, value = data[1], data[2]
+                #     self.data[key] = value
+                # elif option == RETRIEVE_KEY:
+                #     key = data[1]
+                #     data_resp = self.data.get(key, '')
+                elif option==REQUEST_DATA:
+                    id=int(data[1])
+                    # id=int(ids[0])
+                    # id_pred=int(ids[1])
+                    data_resp=self.handler.data(True,id).encode()
+                    conn.sendall(data_resp)
+                    conn.close()
+                    continue
+                elif option==SEND_DATA_PRED:
+                    data_resp=self.handler.data_all().encode()
+                    conn.sendall(data_resp)
+                    conn.close()
+                    continue
                 if data_resp:
                     response = f'{data_resp.id},{data_resp.ip}'.encode()
                     conn.sendall(response)
                 conn.close()
 
-
-if __name__ == "__main__":
-    ip = socket.gethostbyname(socket.gethostname())
-    id = getShaRepr(ip)
-    node = ChordNode(id, ip)
-
-    if len(sys.argv) >= 2:
-        other_ip = sys.argv[1]
-        id = getShaRepr(other_ip)
-        node.join(ChordNodeReference(id, other_ip, node.port))
-
-    while True:
-        pass
+    # def store_key(self, key: str, value: str):
+    # key_hash = getShaRepr(key)
+    # node = self.find_succ(key_hash)
+    # node.store_key(key, value)
+    # self.data[key] = value  # Store in the current node
+    # self.succ.store_key(key, value)  # Replicate to the successor
+    # Retrieve key method to get a value for a given key
+    # def retrieve_key(self, key: str) -> str:
+    # key_hash = getShaRepr(key)
+    # node = self.find_succ(key_hash)
+    # return node.retrieve_key(key)
